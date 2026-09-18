@@ -1,0 +1,103 @@
+@import "tailwindcss";
+
+.font-matrix-display {
+  font-family: 'Chakra Petch', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.font-matrix-mono {
+  font-family: 'Share Tech Mono', monospace;
+}
+
+/* Subtle Matrix-inspired sci-fi background foundation */
+.bg-matrix-texture {
+  background-size: 6px 6px;
+  background-image: 
+    radial-gradient(circle, rgba(0, 255, 128, 0.07) 1px, transparent 1px);
+}
+
+.bg-cinematic-scanline {
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 2px,
+    rgba(0, 0, 0, 0.35) 2px,
+    rgba(0, 0, 0, 0.35) 4px
+  );
+}
+
+.bg-matrix-glow-foundation {
+  background: radial-gradient(
+    ellipse at 50% 50%,
+    rgba(0, 255, 102, 0.035) 0%,
+    rgba(0, 50, 20, 0.015) 55%,
+    rgba(0, 0, 0, 0) 100%
+  );
+}
+
+@keyframes holoDashPulse {
+  0% {
+    stroke-dashoffset: 40;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes reticleRotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes holoFlicker {
+  0%, 100% {
+    opacity: 0.96;
+    transform: scale(1);
+  }
+  18% {
+    opacity: 0.8;
+    transform: scale(0.995);
+  }
+  32% {
+    opacity: 1;
+    transform: scale(1.005);
+  }
+  78% {
+    opacity: 0.92;
+    transform: scale(1);
+  }
+}
+
+@keyframes scanLaserSweep {
+  0% {
+    top: -5%;
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.85;
+  }
+  85% {
+    opacity: 0.85;
+  }
+  100% {
+    top: 105%;
+    opacity: 0;
+  }
+}
+
+.animate-holo-dash {
+  animation: holoDashPulse 1.8s linear infinite;
+}
+
+.animate-reticle-slow {
+  animation: reticleRotate 12s linear infinite;
+}
+
+.animate-scan-sweep {
+  animation: scanLaserSweep 2.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+

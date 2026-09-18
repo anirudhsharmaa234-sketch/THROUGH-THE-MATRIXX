@@ -1,0 +1,6 @@
+{
+  "name": "Hero Background",
+  "description": "Full-screen cinematic experience featuring binary-decoded hero typography, Section 1 Surface sequence, and Section 2 Deep mathematical substrate with 4D hypercube and scroll-driven reveal.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
