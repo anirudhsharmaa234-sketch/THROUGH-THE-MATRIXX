@@ -12,6 +12,7 @@ import DeepAtmosphereCanvas from './DeepAtmosphereCanvas.tsx';
 import DeepFlowBackground from './DeepFlowBackground.tsx';
 import DeepTitle from './DeepTitle.tsx';
 import DeepContextualText from './DeepContextualText.tsx';
+import DeepEndFlashTransition from './DeepEndFlashTransition.tsx';
 import ElementInfoPanel from './information/ElementInfoPanel.tsx';
 import { ELEMENT_INFO_REGISTRY } from '../data/informationRegistry.ts';
 
@@ -114,6 +115,19 @@ export default function Section2DeepSequence({
     }
   }, [isEmbedded, controlledProgress]);
 
+  const effectiveProgress = isEmbedded ? (controlledProgress ?? scrollProgress) : scrollProgress;
+
+  // Automatically dismiss active element inspection when user scrolls or reaches end transition
+  const prevProgressRef = useRef(effectiveProgress);
+  useEffect(() => {
+    if (selectedElementId) {
+      if (effectiveProgress >= 0.88 || Math.abs(effectiveProgress - prevProgressRef.current) > 0.015) {
+        setSelectedElementId(null);
+      }
+    }
+    prevProgressRef.current = effectiveProgress;
+  }, [effectiveProgress, selectedElementId]);
+
   // Smooth scroll handler for nav
   const handleScrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -126,8 +140,6 @@ export default function Section2DeepSequence({
     window.scrollTo({ top, behavior: 'smooth' });
   };
 
-  const effectiveProgress = isEmbedded ? (controlledProgress ?? scrollProgress) : scrollProgress;
-
   // Visibility of DEEP's vertical progress indicator
   // Fades in when DEEP environment starts emerging (~0.05) and remains active
   const showProgress = effectiveProgress >= 0.04;
@@ -138,7 +150,7 @@ export default function Section2DeepSequence({
       <div
         id="section2-deep-embedded-stage"
         className={`absolute inset-0 w-full h-full select-none z-20 ${
-          opacity > 0.35 ? 'pointer-events-auto' : 'pointer-events-none'
+          opacity > 0.35 && effectiveProgress < 0.94 ? 'pointer-events-auto' : 'pointer-events-none'
         }`}
         style={{
           opacity,
@@ -163,19 +175,11 @@ export default function Section2DeepSequence({
         {/* Layer 3: Section 2 Identity Title Overlay (DEEP // LAYER 02) */}
         <DeepTitle scrollProgress={effectiveProgress} />
 
-        {/* Layer 4: End Transition Preparation Overlay towards Next Layer */}
-        {effectiveProgress > 0.92 && (
-          <div
-            id="deep-end-transition-veil"
-            className="absolute inset-0 w-full h-full bg-black pointer-events-none z-25 transition-opacity duration-75"
-            style={{
-              opacity: (effectiveProgress - 0.92) / 0.08,
-            }}
-          />
-        )}
+        {/* Layer 4: Cinematic White Flash & Complete Black Transition at Layer 2 Finale */}
+        <DeepEndFlashTransition progress={effectiveProgress} />
 
         {/* Layer 5: Subtle Substrate Exploration Action Trigger */}
-        {effectiveProgress >= 0.12 && !selectedElement && opacity > 0.6 && (
+        {effectiveProgress >= 0.12 && effectiveProgress < 0.91 && !selectedElement && opacity > 0.6 && (
           <div
             id="deep-exploration-hint-embedded"
             className="absolute bottom-6 left-6 sm:left-10 z-30 pointer-events-auto"
@@ -274,19 +278,11 @@ export default function Section2DeepSequence({
           />
         )}
 
-        {/* Layer 5: End Transition Preparation Overlay towards Next Layer */}
-        {scrollProgress > 0.92 && (
-          <div
-            id="deep-end-transition-veil"
-            className="absolute inset-0 w-full h-full bg-black pointer-events-none z-25 transition-opacity duration-75"
-            style={{
-              opacity: (scrollProgress - 0.92) / 0.08,
-            }}
-          />
-        )}
+        {/* Layer 5: Cinematic White Flash & Complete Black Transition at Layer 2 Finale */}
+        <DeepEndFlashTransition progress={scrollProgress} />
 
         {/* Layer 6: Subtle Substrate Exploration Action Trigger */}
-        {scrollProgress >= 0.12 && !selectedElement && (
+        {scrollProgress >= 0.12 && scrollProgress < 0.91 && !selectedElement && (
           <div
             id="deep-exploration-hint-standalone"
             className="absolute bottom-6 left-6 sm:left-10 z-30 pointer-events-auto"

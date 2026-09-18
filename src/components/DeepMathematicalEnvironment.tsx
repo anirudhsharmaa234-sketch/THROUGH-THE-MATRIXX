@@ -379,16 +379,25 @@ export default function DeepMathematicalEnvironment({
   const onUpdateScreenPosRef = useRef(onUpdateScreenPos);
 
   // 3D Cubic Model Interaction State & HUD Controls
-  const [dragMode, setDragMode] = useState<'rotate' | 'move'>('rotate');
+  const [dragMode, setDragMode] = useState<'rotate' | 'move' | 'zoom'>('rotate');
   const [isInteractingModel, setIsInteractingModel] = useState<boolean>(false);
-  const [modelTelemetry, setModelTelemetry] = useState<{ rotX: number; rotY: number; posX: number; posY: number }>({
+  const [modelTelemetry, setModelTelemetry] = useState<{
+    rotX: number;
+    rotY: number;
+    rotZ: number;
+    posX: number;
+    posY: number;
+    scale: number;
+  }>({
     rotX: 0,
     rotY: 0,
+    rotZ: 0,
     posX: 0,
     posY: 0,
+    scale: 1.0,
   });
 
-  const dragModeRef = useRef<'rotate' | 'move'>('rotate');
+  const dragModeRef = useRef<'rotate' | 'move' | 'zoom'>('rotate');
   useEffect(() => {
     dragModeRef.current = dragMode;
   }, [dragMode]);
@@ -400,20 +409,50 @@ export default function DeepMathematicalEnvironment({
   const gimbalHorizontalRef = useRef<THREE.Mesh | null>(null);
   const gimbalVerticalRef = useRef<THREE.Mesh | null>(null);
 
-  // Interactive 3D Model rotation & position targets (lerped in render loop)
+  // Interactive 3D Model rotation, position & scale targets (lerped in render loop)
   const modelRotRef = useRef<{ x: number; y: number; z: number }>({ x: 0, y: 0, z: 0 });
   const targetModelRotRef = useRef<{ x: number; y: number; z: number }>({ x: 0, y: 0, z: 0 });
   const modelPosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const targetModelPosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const modelScaleRef = useRef<number>(1.0);
+  const targetModelScaleRef = useRef<number>(1.0);
+  const lastTelemetryUpdateRef = useRef<number>(0);
 
   const isPointerDownOnModelRef = useRef<boolean>(false);
   const isDraggingModelRef = useRef<boolean>(false);
-  const activeDragModeRef = useRef<'rotate' | 'move'>('rotate');
+  const activeDragModeRef = useRef<'rotate' | 'move' | 'zoom'>('rotate');
 
-  // Reset 3D Model orientation & position to baseline
+  // Interactive zoom / size increase and decrease handlers
+  const handleZoomIn = () => {
+    targetModelScaleRef.current = Math.min(2.5, Math.round((targetModelScaleRef.current + 0.15) * 100) / 100);
+  };
+
+  const handleZoomOut = () => {
+    targetModelScaleRef.current = Math.max(0.4, Math.round((targetModelScaleRef.current - 0.15) * 100) / 100);
+  };
+
+  const handleSetScale = (scale: number) => {
+    targetModelScaleRef.current = Math.max(0.4, Math.min(2.5, scale));
+  };
+
+  // Interactive finger-tap rotation handlers (X, Y, Z axes)
+  const handleRotateY = (delta: number) => {
+    targetModelRotRef.current.y += delta;
+  };
+
+  const handleRotateX = (delta: number) => {
+    targetModelRotRef.current.x += delta;
+  };
+
+  const handleRotateZ = (delta: number) => {
+    targetModelRotRef.current.z += delta;
+  };
+
+  // Reset 3D Model orientation, position & scale to baseline
   const handleResetModel = () => {
     targetModelRotRef.current = { x: 0, y: 0, z: 0 };
     targetModelPosRef.current = { x: 0, y: 0 };
+    targetModelScaleRef.current = 1.0;
   };
 
   useEffect(() => {
@@ -1086,31 +1125,50 @@ export default function DeepMathematicalEnvironment({
 
       // 5. 3D Cubic Model & 4D Tesseract Dynamic Rotation, Opacity & User Manipulation
       let tesseractAlpha = 0;
-      if (p >= 0.38 && p < 0.58) {
-        tesseractAlpha = (p - 0.38) / 0.20;
-      } else if (p >= 0.58 && p <= 0.94) {
+      if (p >= 0.35 && p < 0.55) {
+        tesseractAlpha = (p - 0.35) / 0.20;
+      } else if (p >= 0.55 && p <= 0.88) {
         tesseractAlpha = 1.0;
-      } else if (p > 0.94) {
-        tesseractAlpha = Math.max(0, 1 - (p - 0.94) / 0.06);
+      } else if (p > 0.88) {
+        // Dematerializes cleanly into photonic singularity particles before white flash
+        tesseractAlpha = Math.max(0, 1 - (p - 0.88) / 0.04);
       }
 
-      // Smooth lerp user interactive rotation and translation targets
+      // Smooth lerp user interactive rotation, translation and scale targets
       modelRotRef.current.x += (targetModelRotRef.current.x - modelRotRef.current.x) * 0.14;
       modelRotRef.current.y += (targetModelRotRef.current.y - modelRotRef.current.y) * 0.14;
       modelRotRef.current.z += (targetModelRotRef.current.z - modelRotRef.current.z) * 0.14;
       modelPosRef.current.x += (targetModelPosRef.current.x - modelPosRef.current.x) * 0.14;
       modelPosRef.current.y += (targetModelPosRef.current.y - modelPosRef.current.y) * 0.14;
+      modelScaleRef.current += (targetModelScaleRef.current - modelScaleRef.current) * 0.16;
+
+      // Throttled live telemetry state update for HUD
+      if (now - lastTelemetryUpdateRef.current > 120) {
+        lastTelemetryUpdateRef.current = now;
+        setModelTelemetry({
+          rotX: modelRotRef.current.x,
+          rotY: modelRotRef.current.y,
+          rotZ: modelRotRef.current.z,
+          posX: modelPosRef.current.x,
+          posY: modelPosRef.current.y,
+          scale: modelScaleRef.current,
+        });
+      }
 
       if (cubicBoxGroupRef.current) {
         // Base procedural rotation from scroll progression
         const autoRotY = p * Math.PI * 2.2;
         const autoRotX = Math.sin(p * Math.PI * 1.4) * 0.35;
 
-        // Position: User translation offset in X and Y
+        // Position: Maintain constant optimal distance of 460 units in front of the camera
+        // This ensures the 3D cubic model is NEVER over-magnified, NEVER fills the screen, and NEVER obstructs scrolling
+        const currentCamZ = cameraRef.current ? cameraRef.current.position.z : 650;
+        const targetBoxZ = currentCamZ - 460;
+
         cubicBoxGroupRef.current.position.set(
           modelPosRef.current.x,
           modelPosRef.current.y,
-          -320
+          targetBoxZ
         );
 
         // Rotation: Scroll auto-rotation + User interactive rotation
@@ -1120,11 +1178,12 @@ export default function DeepMathematicalEnvironment({
           modelRotRef.current.z
         );
 
-        // Hover & Selection feedback scale
+        // Responsive Zoom/Scale: user scale multiplied by subtle hover/select feedback
         const isHovered = hoveredElementIdRef.current === 'tesseract-4d';
         const isSelected = selectedElementIdRef.current === 'tesseract-4d';
-        const targetScale = isSelected ? 1.15 : isHovered ? 1.06 : 1.0;
-        cubicBoxGroupRef.current.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.15);
+        const hoverBonus = isSelected ? 1.08 : isHovered ? 1.04 : 1.0;
+        const finalScale = modelScaleRef.current * hoverBonus;
+        cubicBoxGroupRef.current.scale.set(finalScale, finalScale, finalScale);
 
         // Fade all materials in cubic box group
         cubicBoxMaterialsRef.current.forEach((mat) => {
@@ -1222,18 +1281,18 @@ export default function DeepMathematicalEnvironment({
 
       // 7. Dynamic Camera Fly-through mapped to Scroll Progress
       if (cameraRef.current) {
-        // Starts at Z=750, glides forward smoothly to Z=-650 as user scrolls
-        const targetZ = 750 - p * 1350;
+        // Starts at Z=650, glides forward smoothly to Z=-400 as user scrolls
+        const targetZ = 650 - p * 1050;
         cameraRef.current.position.z = targetZ;
 
         // Subtle lateral camera sweep and mouse parallax
-        const lateralSweep = Math.sin(p * Math.PI * 1.5) * 80;
-        const verticalSweep = Math.cos(p * Math.PI * 1.2) * 45;
-        cameraRef.current.position.x = lateralSweep + mouseRef.current.x * 45;
-        cameraRef.current.position.y = verticalSweep - mouseRef.current.y * 35;
+        const lateralSweep = Math.sin(p * Math.PI * 1.5) * 60;
+        const verticalSweep = Math.cos(p * Math.PI * 1.2) * 35;
+        cameraRef.current.position.x = lateralSweep + mouseRef.current.x * 40;
+        cameraRef.current.position.y = verticalSweep - mouseRef.current.y * 30;
 
         // Subtle camera tilt
-        cameraRef.current.rotation.z = Math.sin(p * Math.PI) * 0.04;
+        cameraRef.current.rotation.z = Math.sin(p * Math.PI) * 0.03;
       }
 
       // 8. Atmospheric Fog modulation
@@ -1290,6 +1349,13 @@ export default function DeepMathematicalEnvironment({
     let lastPointerCoord = { x: 0, y: 0 };
     let dragDistance = 0;
 
+    // Multi-touch tracking for 2-finger twist rotation, 3D orbit, and pinch zoom
+    const activePointers = new Map<number, { x: number; y: number }>();
+    let initialPinchDistance = 0;
+    let initialPinchScale = 1.0;
+    let lastPinchAngle = 0;
+    let lastPinchCenter = { x: 0, y: 0 };
+
     const checkIntersection = (clientX: number, clientY: number) => {
       if (!cameraRef.current || !rendererRef.current) return null;
       const rect = rendererRef.current.domElement.getBoundingClientRect();
@@ -1311,29 +1377,53 @@ export default function DeepMathematicalEnvironment({
     const domEl = renderer.domElement;
 
     const onPointerDown = (e: PointerEvent) => {
+      if (scrollProgressRef.current >= 0.91) return;
+
       pointerDownCoord = { x: e.clientX, y: e.clientY };
       lastPointerCoord = { x: e.clientX, y: e.clientY };
       dragDistance = 0;
+
+      activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+      // Handle 2-finger multi-touch gestures (Twist for roll rotation, Drag for pitch/yaw rotation, Pinch for zoom)
+      if (activePointers.size === 2) {
+        const coords = Array.from(activePointers.values());
+        const p1 = coords[0];
+        const p2 = coords[1];
+        initialPinchDistance = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+        initialPinchScale = targetModelScaleRef.current;
+        lastPinchAngle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+        lastPinchCenter = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+
+        isPointerDownOnModelRef.current = true;
+        isDraggingModelRef.current = true;
+        setIsInteractingModel(true);
+        domEl.style.touchAction = 'none';
+        return;
+      }
 
       const match = checkIntersection(e.clientX, e.clientY);
       if (match && (match.object.userData?.isCubicModel || match.elementId === 'tesseract-4d')) {
         isPointerDownOnModelRef.current = true;
         isDraggingModelRef.current = false;
-        setIsInteractingModel(true);
+
+        // When interacting with the 3D model via finger touch, prevent browser scroll stealing
+        if (e.pointerType === 'touch') {
+          domEl.style.touchAction = 'none';
+          try {
+            domEl.setPointerCapture(e.pointerId);
+          } catch {}
+        }
 
         if (e.shiftKey || e.button === 2) {
           activeDragModeRef.current = 'move';
+        } else if (e.altKey) {
+          activeDragModeRef.current = 'zoom';
         } else {
           activeDragModeRef.current = dragModeRef.current;
         }
 
-        try {
-          domEl.setPointerCapture(e.pointerId);
-        } catch {}
-
-        domEl.style.cursor = 'grabbing';
-        // Prevent touch scrolling only while actively dragging the 3D model
-        domEl.style.touchAction = 'none';
+        domEl.style.cursor = activeDragModeRef.current === 'zoom' ? 'ns-resize' : 'grab';
       } else {
         isPointerDownOnModelRef.current = false;
         isDraggingModelRef.current = false;
@@ -1341,19 +1431,76 @@ export default function DeepMathematicalEnvironment({
     };
 
     const onPointerMove = (e: PointerEvent) => {
+      if (scrollProgressRef.current >= 0.91) return;
+
+      if (activePointers.has(e.pointerId)) {
+        activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      }
+
+      // Handle active 2-finger multi-touch gestures (Twist / Roll, Orbit / Pitch & Yaw, Pinch Zoom)
+      if (activePointers.size === 2 && initialPinchDistance > 10) {
+        const coords = Array.from(activePointers.values());
+        const p1 = coords[0];
+        const p2 = coords[1];
+
+        // 1. Two-finger twist: angular rotation around Z-axis (roll)
+        const currentAngle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+        let deltaAngle = currentAngle - lastPinchAngle;
+        if (deltaAngle > Math.PI) deltaAngle -= 2 * Math.PI;
+        if (deltaAngle < -Math.PI) deltaAngle += 2 * Math.PI;
+        targetModelRotRef.current.z += deltaAngle * 1.35;
+        lastPinchAngle = currentAngle;
+
+        // 2. Two-finger center movement: 3D rotation in X/Y or translation
+        const currentCenter = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+        const centerDx = currentCenter.x - lastPinchCenter.x;
+        const centerDy = currentCenter.y - lastPinchCenter.y;
+        if (activeDragModeRef.current === 'move') {
+          targetModelPosRef.current.x = Math.max(-380, Math.min(380, targetModelPosRef.current.x + centerDx * 0.85));
+          targetModelPosRef.current.y = Math.max(-260, Math.min(260, targetModelPosRef.current.y - centerDy * 0.85));
+        } else {
+          // Direct 3D rotation with 2 fingers
+          targetModelRotRef.current.y += centerDx * 0.013;
+          targetModelRotRef.current.x += centerDy * 0.013;
+        }
+        lastPinchCenter = currentCenter;
+
+        // 3. Two-finger pinch: scale/zoom
+        const currentDist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+        const pinchRatio = currentDist / initialPinchDistance;
+        targetModelScaleRef.current = Math.max(0.4, Math.min(2.5, initialPinchScale * pinchRatio));
+
+        setIsInteractingModel(true);
+        return;
+      }
+
       if (isPointerDownOnModelRef.current) {
         const dx = e.clientX - lastPointerCoord.x;
         const dy = e.clientY - lastPointerCoord.y;
         dragDistance += Math.hypot(dx, dy);
 
-        if (dragDistance > 3) {
+        // Lower threshold for finger touch responsiveness
+        const dragThreshold = e.pointerType === 'touch' ? 3 : 5;
+        if (dragDistance > dragThreshold) {
           isDraggingModelRef.current = true;
+          setIsInteractingModel(true);
+
           if (activeDragModeRef.current === 'move') {
-            targetModelPosRef.current.x = Math.max(-420, Math.min(420, targetModelPosRef.current.x + dx * 0.85));
-            targetModelPosRef.current.y = Math.max(-280, Math.min(280, targetModelPosRef.current.y - dy * 0.85));
+            domEl.style.cursor = 'grabbing';
+            targetModelPosRef.current.x = Math.max(-380, Math.min(380, targetModelPosRef.current.x + dx * 0.85));
+            targetModelPosRef.current.y = Math.max(-260, Math.min(260, targetModelPosRef.current.y - dy * 0.85));
+          } else if (activeDragModeRef.current === 'zoom') {
+            domEl.style.cursor = 'ns-resize';
+            // Dragging up increases scale, dragging down decreases scale
+            targetModelScaleRef.current = Math.max(
+              0.4,
+              Math.min(2.5, targetModelScaleRef.current - dy * 0.007)
+            );
           } else {
-            targetModelRotRef.current.y += dx * 0.013;
-            targetModelRotRef.current.x += dy * 0.013;
+            domEl.style.cursor = 'grabbing';
+            // Finger touch rotates 3D model across horizontal (Y) and vertical (X) axes
+            targetModelRotRef.current.y += dx * 0.014;
+            targetModelRotRef.current.x += dy * 0.014;
           }
         }
         lastPointerCoord = { x: e.clientX, y: e.clientY };
@@ -1366,7 +1513,7 @@ export default function DeepMathematicalEnvironment({
       if (match) {
         hoveredElementIdRef.current = match.elementId;
         if (match.object.userData?.isCubicModel || match.elementId === 'tesseract-4d') {
-          domEl.style.cursor = 'grab';
+          domEl.style.cursor = dragModeRef.current === 'zoom' ? 'ns-resize' : 'grab';
         } else {
           domEl.style.cursor = 'pointer';
         }
@@ -1377,39 +1524,38 @@ export default function DeepMathematicalEnvironment({
     };
 
     const onPointerUp = (e: PointerEvent) => {
+      activePointers.delete(e.pointerId);
+      if (activePointers.size < 2) {
+        initialPinchDistance = 0;
+      }
+
       if (isPointerDownOnModelRef.current) {
         try {
           domEl.releasePointerCapture(e.pointerId);
         } catch {}
-        domEl.style.touchAction = 'pan-y';
-        setIsInteractingModel(false);
 
-        // If it was a quick tap/click without moving the model, open its info panel
-        if (!isDraggingModelRef.current && dragDistance <= 6) {
-          const targetObj = cubicBoxGroupRef.current;
-          if (targetObj && cameraRef.current) {
-            const worldPos = new THREE.Vector3();
-            targetObj.getWorldPosition(worldPos);
-            const projected = worldPos.clone().project(cameraRef.current);
-            const screenX = (projected.x * 0.5 + 0.5) * window.innerWidth;
-            const screenY = (-projected.y * 0.5 + 0.5) * window.innerHeight;
-            onSelectElementRef.current?.('tesseract-4d', { x: screenX, y: screenY });
-          }
+        if (activePointers.size === 0) {
+          domEl.style.touchAction = 'pan-y';
+          setIsInteractingModel(false);
+          isPointerDownOnModelRef.current = false;
+          isDraggingModelRef.current = false;
+          domEl.style.cursor = dragModeRef.current === 'zoom' ? 'ns-resize' : 'grab';
         }
-
-        isPointerDownOnModelRef.current = false;
-        isDraggingModelRef.current = false;
-        domEl.style.cursor = 'grab';
         return;
       }
 
-      // Handle clicks on other interactive elements
+      // Handle clicks on other interactive elements (equations, glyphs)
       const dist = Math.hypot(e.clientX - pointerDownCoord.x, e.clientY - pointerDownCoord.y);
-      if (dist > 10) return; // Ignore drag/swipes
+      if (dist > 8) return; // Ignore drags or scrolls
 
       const match = checkIntersection(e.clientX, e.clientY);
       if (match) {
         const { object, elementId } = match;
+        // Do not auto-open on cubic model tap to prevent interrupting scroll flow
+        if (elementId === 'tesseract-4d' || object.userData?.isCubicModel) {
+          return;
+        }
+
         const worldPos = new THREE.Vector3();
         object.getWorldPosition(worldPos);
 
@@ -1422,9 +1568,26 @@ export default function DeepMathematicalEnvironment({
       }
     };
 
+    // Wheel zoom on model when holding modifier key or in ZOOM mode
+    const onWheel = (e: WheelEvent) => {
+      if (scrollProgressRef.current >= 0.91) return;
+
+      const match = checkIntersection(e.clientX, e.clientY);
+      if (match && (match.object.userData?.isCubicModel || match.elementId === 'tesseract-4d')) {
+        if (e.ctrlKey || e.altKey || e.shiftKey || dragModeRef.current === 'zoom') {
+          e.preventDefault();
+          const zoomDelta = -Math.sign(e.deltaY) * 0.12;
+          targetModelScaleRef.current = Math.max(0.4, Math.min(2.5, targetModelScaleRef.current + zoomDelta));
+        }
+      }
+    };
+
     domEl.addEventListener('pointerdown', onPointerDown, { passive: true });
     domEl.addEventListener('pointerup', onPointerUp, { passive: true });
+    domEl.addEventListener('pointercancel', onPointerUp, { passive: true });
     domEl.addEventListener('pointermove', onPointerMove, { passive: true });
+    domEl.addEventListener('wheel', onWheel, { passive: false });
+    window.addEventListener('pointercancel', onPointerUp, { passive: true });
 
     // Responsive window resize observer
     const handleResize = () => {
@@ -1446,7 +1609,10 @@ export default function DeepMathematicalEnvironment({
       window.removeEventListener('resize', handleResize);
       domEl.removeEventListener('pointerdown', onPointerDown);
       domEl.removeEventListener('pointerup', onPointerUp);
+      domEl.removeEventListener('pointercancel', onPointerUp);
       domEl.removeEventListener('pointermove', onPointerMove);
+      domEl.removeEventListener('wheel', onWheel);
+      window.removeEventListener('pointercancel', onPointerUp);
 
       if (rendererRef.current && rendererRef.current.domElement) {
         if (rendererRef.current.domElement.parentNode) {
@@ -1474,67 +1640,198 @@ export default function DeepMathematicalEnvironment({
         ref={mountRef}
         id="deep-webgl-mathematical-canvas"
         className={`absolute inset-0 w-full h-full z-10 overflow-hidden bg-black ${
-          scrollProgress >= 0.08 ? 'pointer-events-auto' : 'pointer-events-none'
+          scrollProgress >= 0.08 && scrollProgress < 0.92 ? 'pointer-events-auto' : 'pointer-events-none'
         }`}
         style={{ touchAction: 'pan-y' }}
         aria-hidden="true"
       />
 
       {/* Cybernetic 3D Cubic Model HUD Controller & Telemetry */}
-      {scrollProgress >= 0.20 && (
+      {scrollProgress >= 0.20 && scrollProgress < 0.92 && (
         <div
           id="cubic-model-hud-controller"
           className="fixed bottom-6 sm:bottom-8 right-5 sm:right-8 z-30 pointer-events-auto flex flex-col items-end gap-2 font-matrix-mono select-none"
         >
           {/* Main Control Pill */}
-          <div className="flex items-center gap-1.5 p-1.5 bg-black/85 border border-[#22c55e]/40 rounded-sm backdrop-blur-md shadow-[0_0_16px_rgba(34,197,94,0.18)]">
-            <span className="px-2 py-0.5 text-[9px] tracking-[0.2em] text-[#86efac] font-bold border-r border-[#22c55e]/30 hidden sm:inline">
+          <div className="flex flex-wrap items-center gap-1.5 p-1.5 bg-black/90 border border-[#22c55e]/40 rounded-sm backdrop-blur-md shadow-[0_0_20px_rgba(34,197,94,0.22)]">
+            <span className="px-2 py-0.5 text-[9px] tracking-[0.2em] text-[#86efac] font-bold border-r border-[#22c55e]/30 hidden md:inline">
               3D MODEL
             </span>
 
-            {/* Mode Switcher */}
-            <button
-              type="button"
-              id="cubic-model-mode-toggle"
-              onClick={() => {
-                const next = dragMode === 'rotate' ? 'move' : 'rotate';
-                setDragMode(next);
-                dragModeRef.current = next;
-              }}
-              className={`px-2.5 py-1 text-[9px] tracking-[0.18em] uppercase transition-all rounded-sm border cursor-pointer ${
-                dragMode === 'rotate'
-                  ? 'bg-[#22c55e]/25 border-[#4ade80] text-[#86efac] shadow-[0_0_8px_rgba(74,222,128,0.3)]'
-                  : 'bg-black/50 border-neutral-700 text-neutral-400 hover:text-neutral-200'
-              }`}
-              title="Toggle 3D Rotation / Translation Mode"
-            >
-              {dragMode === 'rotate' ? '⟳ ROTATE' : '✥ MOVE'}
-            </button>
+            {/* Mode Switcher: Rotate, Move, Zoom */}
+            <div className="flex items-center bg-black/60 p-0.5 border border-neutral-800 rounded-sm">
+              <button
+                type="button"
+                id="cubic-model-mode-rotate"
+                onClick={() => {
+                  setDragMode('rotate');
+                  dragModeRef.current = 'rotate';
+                }}
+                className={`px-2 py-1 text-[9px] tracking-[0.16em] uppercase transition-all rounded-xs cursor-pointer ${
+                  dragMode === 'rotate'
+                    ? 'bg-[#22c55e]/30 border border-[#4ade80] text-[#86efac] shadow-[0_0_8px_rgba(74,222,128,0.3)]'
+                    : 'border border-transparent text-neutral-400 hover:text-neutral-200'
+                }`}
+                title="Rotate 3D Hypercube on X/Y axes"
+              >
+                ⟳ <span className="hidden sm:inline">ROTATE</span>
+              </button>
+              <button
+                type="button"
+                id="cubic-model-mode-move"
+                onClick={() => {
+                  setDragMode('move');
+                  dragModeRef.current = 'move';
+                }}
+                className={`px-2 py-1 text-[9px] tracking-[0.16em] uppercase transition-all rounded-xs cursor-pointer ${
+                  dragMode === 'move'
+                    ? 'bg-[#22c55e]/30 border border-[#4ade80] text-[#86efac] shadow-[0_0_8px_rgba(74,222,128,0.3)]'
+                    : 'border border-transparent text-neutral-400 hover:text-neutral-200'
+                }`}
+                title="Reposition / Pan 3D Hypercube across screen"
+              >
+                ✥ <span className="hidden sm:inline">MOVE</span>
+              </button>
+              <button
+                type="button"
+                id="cubic-model-mode-zoom"
+                onClick={() => {
+                  setDragMode('zoom');
+                  dragModeRef.current = 'zoom';
+                }}
+                className={`px-2 py-1 text-[9px] tracking-[0.16em] uppercase transition-all rounded-xs cursor-pointer ${
+                  dragMode === 'zoom'
+                    ? 'bg-[#22c55e]/30 border border-[#4ade80] text-[#86efac] shadow-[0_0_8px_rgba(74,222,128,0.3)]'
+                    : 'border border-transparent text-neutral-400 hover:text-neutral-200'
+                }`}
+                title="Zoom in/out: Drag up to expand size, drag down to shrink"
+              >
+                🔍 <span className="hidden sm:inline">ZOOM</span>
+              </button>
+            </div>
+
+            {/* Quick Finger-Tap Rotation Buttons (Y, X, Z Roll) */}
+            <div className="flex items-center gap-1 border-l border-[#22c55e]/30 pl-1.5">
+              <button
+                type="button"
+                id="cubic-model-rot-y-ccw"
+                onClick={() => handleRotateY(-Math.PI / 4)}
+                className="w-6 h-6 flex items-center justify-center text-[10px] font-bold bg-black/60 hover:bg-[#22c55e]/25 border border-neutral-700 hover:border-[#4ade80] text-neutral-300 hover:text-[#86efac] transition-all rounded-xs cursor-pointer"
+                title="Rotate Yaw -45° (Counter-Clockwise)"
+              >
+                ↶
+              </button>
+              <button
+                type="button"
+                id="cubic-model-rot-y-cw"
+                onClick={() => handleRotateY(Math.PI / 4)}
+                className="w-6 h-6 flex items-center justify-center text-[10px] font-bold bg-black/60 hover:bg-[#22c55e]/25 border border-neutral-700 hover:border-[#4ade80] text-neutral-300 hover:text-[#86efac] transition-all rounded-xs cursor-pointer"
+                title="Rotate Yaw +45° (Clockwise)"
+              >
+                ↷
+              </button>
+              <button
+                type="button"
+                id="cubic-model-rot-x-step"
+                onClick={() => handleRotateX(Math.PI / 4)}
+                className="px-1 h-6 flex items-center justify-center text-[9px] font-bold bg-black/60 hover:bg-[#22c55e]/25 border border-neutral-700 hover:border-[#4ade80] text-neutral-300 hover:text-[#86efac] transition-all rounded-xs cursor-pointer"
+                title="Rotate Pitch +45° (X-Axis)"
+              >
+                X↻
+              </button>
+              <button
+                type="button"
+                id="cubic-model-rot-z-step"
+                onClick={() => handleRotateZ(Math.PI / 4)}
+                className="px-1 h-6 flex items-center justify-center text-[9px] font-bold bg-black/60 hover:bg-[#22c55e]/25 border border-neutral-700 hover:border-[#4ade80] text-[#86efac] transition-all rounded-xs cursor-pointer"
+                title="Twist Roll +45° (Z-Axis / 2-Finger Twist)"
+              >
+                Z↻
+              </button>
+            </div>
+
+            {/* Quick Size In/Out Step Controls */}
+            <div className="flex items-center gap-1 border-l border-[#22c55e]/30 pl-1.5">
+              <button
+                type="button"
+                id="cubic-model-zoom-out-btn"
+                onClick={handleZoomOut}
+                className="w-6 h-6 flex items-center justify-center text-[12px] font-bold bg-black/60 hover:bg-[#22c55e]/25 border border-neutral-700 hover:border-[#4ade80] text-neutral-300 hover:text-[#86efac] transition-all rounded-xs cursor-pointer"
+                title="Decrease Size / Zoom Out (−15%)"
+              >
+                −
+              </button>
+
+              <button
+                type="button"
+                id="cubic-model-zoom-indicator-btn"
+                onClick={() => handleSetScale(1.0)}
+                className="px-1.5 py-0.5 min-w-[46px] text-center text-[9px] font-bold tracking-[0.1em] bg-black/60 hover:bg-neutral-800 border border-neutral-700 text-[#4ade80] transition-colors rounded-xs cursor-pointer"
+                title="Current Size Scale — Click to reset to 100%"
+              >
+                {Math.round(modelTelemetry.scale * 100)}%
+              </button>
+
+              <button
+                type="button"
+                id="cubic-model-zoom-in-btn"
+                onClick={handleZoomIn}
+                className="w-6 h-6 flex items-center justify-center text-[12px] font-bold bg-black/60 hover:bg-[#22c55e]/25 border border-neutral-700 hover:border-[#4ade80] text-neutral-300 hover:text-[#86efac] transition-all rounded-xs cursor-pointer"
+                title="Increase Size / Zoom In (+15%)"
+              >
+                +
+              </button>
+            </div>
 
             {/* Reset Button */}
             <button
               type="button"
               id="cubic-model-reset-btn"
               onClick={handleResetModel}
-              className="px-2.5 py-1 text-[9px] tracking-[0.18em] uppercase bg-black/50 hover:bg-[#22c55e]/20 border border-neutral-700 hover:border-[#4ade80] text-neutral-300 hover:text-[#86efac] transition-all rounded-sm cursor-pointer"
-              title="Reset 3D Cubic Model Position & Orientation"
+              className="px-2 py-1 text-[9px] tracking-[0.16em] uppercase bg-black/60 hover:bg-[#22c55e]/20 border border-neutral-700 hover:border-[#4ade80] text-neutral-300 hover:text-[#86efac] transition-all rounded-sm cursor-pointer ml-0.5"
+              title="Reset 3D Cubic Model Position, Orientation & Size to 100%"
             >
               ⟲ RESET
             </button>
+
+            {/* Dedicated Info / Details Button */}
+            <button
+              type="button"
+              id="cubic-model-info-btn"
+              onClick={() => {
+                if (cameraRef.current && cubicBoxGroupRef.current) {
+                  const worldPos = new THREE.Vector3();
+                  cubicBoxGroupRef.current.getWorldPosition(worldPos);
+                  const projected = worldPos.clone().project(cameraRef.current);
+                  const screenX = (projected.x * 0.5 + 0.5) * window.innerWidth;
+                  const screenY = (-projected.y * 0.5 + 0.5) * window.innerHeight;
+                  onSelectElementRef.current?.('tesseract-4d', { x: screenX, y: screenY });
+                }
+              }}
+              className="px-2 py-1 text-[9px] tracking-[0.16em] uppercase bg-black/60 hover:bg-[#22c55e]/20 border border-neutral-700 hover:border-[#4ade80] text-neutral-300 hover:text-[#86efac] transition-all rounded-sm cursor-pointer"
+              title="View 4D Hypercube Tesseract Details & Formulation"
+            >
+              ⓘ INFO
+            </button>
           </div>
 
-          {/* Orientation Telemetry & Guidance */}
-          <div className="flex items-center gap-2.5 text-[8px] sm:text-[9px] tracking-[0.2em] text-neutral-400 uppercase bg-black/60 px-2 py-0.5 border border-[#22c55e]/20 rounded-sm">
-            <span className="text-[#86efac]">
-              ψ: {Math.round((modelTelemetry.rotY * 180) / Math.PI)}° θ:{' '}
-              {Math.round((modelTelemetry.rotX * 180) / Math.PI)}°
+          {/* Orientation & Size Telemetry & Multi-Touch Guidance */}
+          <div className="flex items-center gap-2 text-[8px] sm:text-[9px] tracking-[0.18em] text-neutral-400 uppercase bg-black/75 px-2.5 py-1 border border-[#22c55e]/25 rounded-sm shadow-[0_0_12px_rgba(0,0,0,0.6)]">
+            <span className="text-[#86efac] font-bold">
+              SIZE: {Math.round(modelTelemetry.scale * 100)}%
             </span>
             <span className="text-[#4ade80]/50">•</span>
-            <span className="text-neutral-400 hidden md:inline">
-              DRAG MODEL TO {dragMode === 'rotate' ? 'ROTATE' : 'MOVE'} // SCROLL TO DIVE
+            <span className="text-neutral-300">
+              ψ:{Math.round((modelTelemetry.rotY * 180) / Math.PI)}° θ:{' '}
+              {Math.round((modelTelemetry.rotX * 180) / Math.PI)}° φ:{' '}
+              {Math.round((modelTelemetry.rotZ * 180) / Math.PI)}°
             </span>
-            <span className="text-neutral-400 md:hidden">
-              DRAG MODEL // SCROLL PAGE
+            <span className="text-[#4ade80]/50">•</span>
+            <span className="text-neutral-400 hidden sm:inline">
+              1 FINGER: ROTATE 3D // 2 FINGERS: TWIST (ROLL) & PINCH ZOOM
+            </span>
+            <span className="text-neutral-400 sm:hidden">
+              1-FINGER ROTATE // 2-FINGER TWIST & PINCH
             </span>
           </div>
         </div>

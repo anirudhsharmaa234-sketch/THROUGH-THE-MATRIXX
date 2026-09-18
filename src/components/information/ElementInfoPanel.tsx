@@ -37,6 +37,18 @@ export default function ElementInfoPanel({
     }
   }, [element]);
 
+  // Automatically dismiss panel when user scrolls the page, ensuring scrolling is never blocked or stuck
+  useEffect(() => {
+    let initialY = window.scrollY;
+    const handleWindowScroll = () => {
+      if (Math.abs(window.scrollY - initialY) > 12) {
+        onClose();
+      }
+    };
+    window.addEventListener('scroll', handleWindowScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleWindowScroll);
+  }, [onClose]);
+
   // Keyboard navigation & escape listener
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -104,6 +116,18 @@ export default function ElementInfoPanel({
       className="fixed inset-0 z-50 pointer-events-none select-none overflow-hidden"
       aria-label={`Information for ${element.name}`}
     >
+      {/* 
+        Full-Screen Backdrop:
+        Dismisses the info panel on click or wheel scroll, preventing any scroll-blocking or trapping
+      */}
+      <div
+        id="element-info-backdrop"
+        onClick={onClose}
+        onWheel={() => onClose()}
+        className="absolute inset-0 w-full h-full pointer-events-auto bg-black/25 backdrop-blur-[1px] cursor-pointer"
+        aria-hidden="true"
+      />
+
       {/* 
         Interactive SVG Connecting Circuit Trace:
         PINPOINT RETICLE -> THIN CONNECTING LINE -> INFORMATION PANEL
@@ -193,6 +217,7 @@ export default function ElementInfoPanel({
       <div
         ref={panelRef}
         id={`element-panel-${element.id}`}
+        onClick={(e) => e.stopPropagation()}
         className="absolute pointer-events-auto w-[calc(100vw-32px)] sm:w-[440px] max-h-[85vh] overflow-y-auto bg-[#020b05]/95 border border-[#22c55e]/50 backdrop-blur-xl p-5 sm:p-6 shadow-[0_0_35px_rgba(34,197,94,0.22)] font-matrix-mono text-neutral-200 transition-all duration-200"
         style={{
           left: `${targetPanelX}px`,

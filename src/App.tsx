@@ -12,6 +12,7 @@ import VerticalProgress from './components/VerticalProgress.tsx';
 import ContextualText from './components/ContextualText.tsx';
 import DeepContextualText from './components/DeepContextualText.tsx';
 import CustomCursor from './components/CustomCursor.tsx';
+import AutoScrollButton from './components/AutoScrollButton.tsx';
 import SectionInfoOverlay from './components/information/SectionInfoOverlay.tsx';
 import { SECTION_INFO_REGISTRY } from './data/informationRegistry.ts';
 
@@ -147,12 +148,21 @@ export default function App() {
       <CustomCursor />
 
       {/* Futuristic Minimal Navigation synchronized with active section & info trigger */}
-      <Navigation
-        activeSection={activeSection}
-        onSurfaceClick={handleScrollToTop}
-        onDeepClick={handleScrollToDeep}
-        onOpenSectionInfo={() => setIsSectionInfoOpen(true)}
-      />
+      <div
+        className="transition-opacity duration-150"
+        style={{
+          opacity: isDeepActive && deepProgress >= 0.95
+            ? Math.max(0, 1 - (deepProgress - 0.95) / 0.035)
+            : 1,
+        }}
+      >
+        <Navigation
+          activeSection={activeSection}
+          onSurfaceClick={handleScrollToTop}
+          onDeepClick={handleScrollToDeep}
+          onOpenSectionInfo={() => setIsSectionInfoOpen(true)}
+        />
+      </div>
 
       {/* Dynamic Vertical Scroll Progress Indicator */}
       {!isDeepActive ? (
@@ -168,6 +178,9 @@ export default function App() {
           sectionLabel="DEEP"
         />
       )}
+
+      {/* Discrete Side Auto-Scroll Control (Ultra-subtle, very rarely visible ghost button) */}
+      <AutoScrollButton containerRef={containerRef} />
 
       {/* Cinematic Contextual Narrative Text Overlays */}
       {!isDeepActive ? (

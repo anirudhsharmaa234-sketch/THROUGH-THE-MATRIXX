@@ -24,6 +24,10 @@ export default function VerticalProgress({
   if (sectionCode === '01' && progress >= 0.97) {
     opacity = Math.max(0, (1.0 - progress) / 0.03);
   }
+  // Fade out Section 2 indicator during end white flash / complete black void transition
+  if (sectionCode === '02' && progress >= 0.945) {
+    opacity = Math.max(0, (0.970 - progress) / 0.025);
+  }
   if (opacity <= 0.01) {
     return null;
   }
