@@ -16,15 +16,16 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { id: 'surface', label: 'SURFACE', code: '01', isAvailable: true },
   { id: 'deep', label: 'DEEP', code: '02', isAvailable: true },
-  { id: 'network', label: 'NETWORK', code: '03', isAvailable: false },
+  { id: 'network', label: 'NETWORK', code: '03', isAvailable: true },
   { id: 'simulation', label: 'SIMULATION', code: '04', isAvailable: false },
   { id: 'core', label: 'CORE', code: '05', isAvailable: false },
 ];
 
 interface NavigationProps {
-  activeSection?: 'surface' | 'deep';
+  activeSection?: 'surface' | 'deep' | 'network';
   onSurfaceClick?: () => void;
   onDeepClick?: () => void;
+  onNetworkClick?: () => void;
   onOpenSectionInfo?: () => void;
 }
 
@@ -32,6 +33,7 @@ export default function Navigation({
   activeSection = 'surface',
   onSurfaceClick,
   onDeepClick,
+  onNetworkClick,
   onOpenSectionInfo,
 }: NavigationProps) {
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
@@ -52,6 +54,15 @@ export default function Navigation({
           const deepSec = document.getElementById('deep-section2-timeline');
           if (deepSec) {
             window.scrollTo({ top: deepSec.offsetTop, behavior: 'smooth' });
+          }
+        }
+      } else if (item.id === 'network') {
+        if (onNetworkClick) {
+          onNetworkClick();
+        } else {
+          const netSec = document.getElementById('network-section3-timeline');
+          if (netSec) {
+            window.scrollTo({ top: netSec.offsetTop, behavior: 'smooth' });
           }
         }
       }

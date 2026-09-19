@@ -58,6 +58,29 @@ export const SECTION_INFO_REGISTRY: Record<string, SectionInfo> = {
       'STATUS: LIVE_EVALUATION',
     ],
   },
+  network: {
+    id: 'network',
+    sectionCode: '03',
+    name: 'THE NETWORK',
+    subtitle: 'THE CONNECTIONS // DISTRIBUTED SYNAPSE FABRIC',
+    summary: 'The spatial interconnect matrix where isolated computational nodes, systems, and layers synchronize.',
+    whatItRepresents:
+      'THE NETWORK represents the connective tissue of the simulated reality. If SURFACE is the physical world and DEEP is the raw computational intelligence, NETWORK is the universal web of connections binding them into a coherent living whole.',
+    whatYouAreSeeing:
+      'A vast, 3D spatial field of interconnected nodes, extending pathways, travelling data packets, floating routing polyhedra, and an ambient looping digital atmosphere. Signals awaken in isolation before bridging into a dense, self-organizing mesh.',
+    interactionMeaning:
+      'Every node and pathway represents an active conduit of information exchange. In the completed architecture, each element reveals how signals route across the simulation, from initial tensor inputs to high-level reality synthesis.',
+    relationToMatrix:
+      'In the Matrix, no node exists in isolation. The simulation functions because billions of neural signals, sensory matrices, and computational engines continuously communicate across an instantaneous routing fabric.',
+    distinctionFromPrevious:
+      'SURFACE explores the biological threshold, and DEEP reveals the underlying mathematical equations. THE NETWORK reveals how all individual information points discovered in DEEP connect together into a unified super-system.',
+    telemetryBadges: [
+      'FABRIC: DISTRIBUTED_SYNAPSE_MESH',
+      'TOPOLOGY: 3D_ROUTING_LATTICE',
+      'LAYER: 03_NETWORK',
+      'STATUS: SYNCHRONIZED',
+    ],
+  },
 };
 
 /**

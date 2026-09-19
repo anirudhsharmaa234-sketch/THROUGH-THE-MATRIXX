@@ -6,6 +6,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Section1Sequence from './components/Section1Sequence.tsx';
 import Section2DeepSequence from './components/Section2DeepSequence.tsx';
+import Section3NetworkSequence from './components/Section3NetworkSequence.tsx';
 import SurfaceToDeepTransition from './components/SurfaceToDeepTransition.tsx';
 import Navigation from './components/Navigation.tsx';
 import VerticalProgress from './components/VerticalProgress.tsx';
@@ -19,26 +20,11 @@ import { SECTION_INFO_REGISTRY } from './data/informationRegistry.ts';
 /**
  * Main Cinematic Application Experience
  *
- * Unifies SECTION 1 (SURFACE) and SECTION 2 (DEEP) into a single continuous,
- * seamless scroll-driven journey:
- *
- * 1. SURFACE (0.00 -> 0.44):
- *    - Matrix Agent, biometric scanner, Triverse 3D artifact, Flow video background.
- *    - Climax at 0.42 -> 0.44: Fingertip makes contact with digital glass,
- *      producing an intense electric arc, shockwave ripple, and brief white flash.
- *
- * 2. TRANSITION BRIDGE (0.42 -> 0.58):
- *    - Digital impact state flows directly into deeper descent / dimensional warp tunnel.
- *    - 100% Scroll-Controlled: zero autoplay, zero loops, perfectly reversible.
- *    - Full-viewport responsive cover framing (zero letterboxing, zero black bars).
- *    - Intelligent overlap: SURFACE stays active as transition takes visual control,
- *      while DEEP begins materializing underneath/through the dimensional shift.
- *    - Zero layout unpinning, zero section boundary jump, zero empty black gaps.
- *
- * 3. DEEP (0.56 -> 1.00):
- *    - Once transition resolves, DEEP is already visually established.
- *    - Progressive descent through 3D mathematical space (4D tesseract manifold,
- *      formulation cards, neural filaments, binary cascades, Flow background).
+ * Unifies:
+ * - SECTION 1 (SURFACE): The Boundary Veil // The World
+ * - BRIDGE: Dimensional shift & warp tunnel
+ * - SECTION 2 (DEEP): The Mathematical Substrate // The Intelligence
+ * - SECTION 3 (THE NETWORK): The Spatial Interconnect // The Connections
  */
 export default function App() {
   const containerRef = useRef<HTMLElement | null>(null);
@@ -70,23 +56,23 @@ export default function App() {
   }, [handleScroll]);
 
   // Timeline Boundaries
-  const SURFACE_END = 0.46;
-  const BRIDGE_START = 0.42;
-  const BRIDGE_END = 0.58;
-  const DEEP_START = 0.48;
+  const SURFACE_END = 0.31;
+  const BRIDGE_START = 0.28;
+  const BRIDGE_END = 0.38;
+  const DEEP_START = 0.32;
+  const DEEP_END = 0.65;
+  const NETWORK_START = 0.64;
 
   // 1. Surface Internal Progress (0.00 -> 1.00)
-  // Maps 0.00 -> 0.46 of global progress to 0.00 -> 1.00 of Surface's timeline
   const surfaceProgress = Math.min(1, globalProgress / SURFACE_END);
 
-  // Surface Opacity: 1.0 during surface play, smoothly crossfades down between 0.44 and 0.52
+  // Surface Opacity: 1.0 during surface play, smoothly crossfades down 0.30 -> 0.35
   let surfaceOpacity = 1;
-  if (globalProgress > 0.44) {
-    surfaceOpacity = Math.max(0, 1 - (globalProgress - 0.44) / 0.08);
+  if (globalProgress > 0.30) {
+    surfaceOpacity = Math.max(0, 1 - (globalProgress - 0.30) / 0.05);
   }
 
-  // 2. Transition Bridge Progress & Opacity
-  // Bridge runs from 0.42 to 0.58
+  // 2. Transition Bridge Progress & Opacity (0.28 -> 0.38)
   const bridgeProgress = Math.max(
     0,
     Math.min(1, (globalProgress - BRIDGE_START) / (BRIDGE_END - BRIDGE_START))
@@ -94,32 +80,50 @@ export default function App() {
 
   let bridgeOpacity = 0;
   if (globalProgress >= BRIDGE_START && globalProgress <= BRIDGE_END) {
-    if (globalProgress < 0.48) {
-      // Fade in from 0.42 to 0.48
-      bridgeOpacity = (globalProgress - BRIDGE_START) / (0.48 - BRIDGE_START);
-    } else if (globalProgress > 0.52) {
-      // Fade out from 0.52 to 0.58
-      bridgeOpacity = Math.max(0, 1 - (globalProgress - 0.52) / (BRIDGE_END - 0.52));
+    if (globalProgress < 0.32) {
+      bridgeOpacity = (globalProgress - BRIDGE_START) / (0.32 - BRIDGE_START);
+    } else if (globalProgress > 0.34) {
+      bridgeOpacity = Math.max(0, 1 - (globalProgress - 0.34) / (BRIDGE_END - 0.34));
     } else {
       bridgeOpacity = 1;
     }
   }
 
-  // 3. Deep Internal Progress & Opacity
-  // Deep starts emerging at 0.48 and continues to 1.00
+  // 3. Deep Internal Progress & Opacity (0.32 -> 0.65)
   const deepProgress = Math.max(
     0,
-    Math.min(1, (globalProgress - DEEP_START) / (1.0 - DEEP_START))
+    Math.min(1, (globalProgress - DEEP_START) / (DEEP_END - DEEP_START))
   );
 
   let deepOpacity = 0;
-  if (globalProgress >= DEEP_START) {
-    deepOpacity = Math.min(1, (globalProgress - DEEP_START) / (0.56 - DEEP_START));
+  if (globalProgress >= DEEP_START && globalProgress <= DEEP_END + 0.02) {
+    if (globalProgress < 0.37) {
+      deepOpacity = Math.min(1, (globalProgress - DEEP_START) / (0.37 - DEEP_START));
+    } else if (globalProgress > DEEP_END - 0.01) {
+      deepOpacity = Math.max(0, 1 - (globalProgress - (DEEP_END - 0.01)) / 0.03);
+    } else {
+      deepOpacity = 1;
+    }
+  }
+
+  // 4. Network Internal Progress & Opacity (0.64 -> 1.00)
+  const networkProgress = Math.max(
+    0,
+    Math.min(1, (globalProgress - NETWORK_START) / (1.0 - NETWORK_START))
+  );
+
+  let networkOpacity = 0;
+  if (globalProgress >= NETWORK_START) {
+    networkOpacity = Math.min(1, (globalProgress - NETWORK_START) / 0.02);
   }
 
   // Active section for navigation and indicators
-  const isDeepActive = globalProgress >= 0.50;
-  const activeSection: 'surface' | 'deep' = isDeepActive ? 'deep' : 'surface';
+  let activeSection: 'surface' | 'deep' | 'network' = 'surface';
+  if (globalProgress >= 0.65) {
+    activeSection = 'network';
+  } else if (globalProgress >= 0.32) {
+    activeSection = 'deep';
+  }
 
   // Section Information Layer state
   const [isSectionInfoOpen, setIsSectionInfoOpen] = useState<boolean>(false);
@@ -133,67 +137,75 @@ export default function App() {
     const container = containerRef.current;
     if (!container) return;
     const totalScrollable = container.offsetHeight - window.innerHeight;
-    // Scroll directly to where DEEP is established
-    window.scrollTo({ top: totalScrollable * 0.56, behavior: 'smooth' });
+    window.scrollTo({ top: totalScrollable * 0.38, behavior: 'smooth' });
+  };
+
+  const handleScrollToNetwork = () => {
+    const container = containerRef.current;
+    if (!container) return;
+    const totalScrollable = container.offsetHeight - window.innerHeight;
+    window.scrollTo({ top: totalScrollable * 0.74, behavior: 'smooth' });
   };
 
   return (
     <main
       ref={containerRef}
       id="matrix-cinematic-master-timeline"
-      className="relative w-full h-[850vh] bg-[#000000] text-neutral-100 font-matrix-mono selection:bg-[#22c55e]/20 selection:text-[#86efac] select-none"
+      className="relative w-full h-[1350vh] bg-[#000000] text-neutral-100 font-matrix-mono selection:bg-[#22c55e]/20 selection:text-[#86efac] select-none"
       aria-label="Through The Matrix Cinematic Experience"
     >
       {/* Precision Desktop Custom Cursor across entire journey */}
       <CustomCursor />
 
       {/* Futuristic Minimal Navigation synchronized with active section & info trigger */}
-      <div
-        className="transition-opacity duration-150"
-        style={{
-          opacity: isDeepActive && deepProgress >= 0.95
-            ? Math.max(0, 1 - (deepProgress - 0.95) / 0.035)
-            : 1,
-        }}
-      >
+      <div className="transition-opacity duration-150">
         <Navigation
           activeSection={activeSection}
           onSurfaceClick={handleScrollToTop}
           onDeepClick={handleScrollToDeep}
+          onNetworkClick={handleScrollToNetwork}
           onOpenSectionInfo={() => setIsSectionInfoOpen(true)}
         />
       </div>
 
       {/* Dynamic Vertical Scroll Progress Indicator */}
-      {!isDeepActive ? (
+      {activeSection === 'surface' && (
         <VerticalProgress
           progress={surfaceProgress}
           sectionCode="01"
           sectionLabel="SURFACE"
         />
-      ) : (
+      )}
+      {activeSection === 'deep' && (
         <VerticalProgress
           progress={deepProgress}
           sectionCode="02"
           sectionLabel="DEEP"
         />
       )}
+      {activeSection === 'network' && (
+        <VerticalProgress
+          progress={networkProgress}
+          sectionCode="03"
+          sectionLabel="NETWORK"
+        />
+      )}
 
-      {/* Discrete Side Auto-Scroll Control (Ultra-subtle, very rarely visible ghost button) */}
+      {/* Discrete Side Auto-Scroll Control */}
       <AutoScrollButton containerRef={containerRef} />
 
       {/* Cinematic Contextual Narrative Text Overlays */}
-      {!isDeepActive ? (
+      {activeSection === 'surface' && (
         <ContextualText progress={surfaceProgress} />
-      ) : (
+      )}
+      {activeSection === 'deep' && (
         <DeepContextualText progress={deepProgress} />
       )}
 
       {/* 
         Single Unified Pinned Sticky Viewport:
-        Permanently pinned at top: 0 throughout the entire 850vh scroll track.
-        NEVER unpins, NEVER slides off-screen, eliminating 100% of section boundaries,
-        jumps, white/black flashes, and seams.
+        Permanently pinned at top: 0 throughout the entire scroll track.
+        NEVER unpins, NEVER slides off-screen, eliminating 100% of section boundaries.
       */}
       <div
         id="unified-cinematic-viewport"
@@ -210,7 +222,6 @@ export default function App() {
         {/* 
           SURFACE -> DEEP TRANSITION BRIDGE:
           Scroll-controlled dimensional shift, warp tunnel, and concentric data rings.
-          Fills 100% full viewport edge-to-edge with responsive cover reframing.
         */}
         <SurfaceToDeepTransition
           bridgeProgress={bridgeProgress}
@@ -223,6 +234,13 @@ export default function App() {
           controlledProgress={deepProgress}
           opacity={deepOpacity}
           onOpenSectionInfo={() => setIsSectionInfoOpen(true)}
+        />
+
+        {/* SECTION 3 (THE NETWORK): Embedded Layer Group */}
+        <Section3NetworkSequence
+          isEmbedded
+          controlledProgress={networkProgress}
+          opacity={networkOpacity}
         />
       </div>
 
