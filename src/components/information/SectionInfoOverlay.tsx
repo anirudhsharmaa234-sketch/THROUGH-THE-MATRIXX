@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { SectionInfo } from '../../types/informationSystem.ts';
 
 interface SectionInfoOverlayProps {
@@ -30,20 +30,63 @@ export default function SectionInfoOverlay({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
+  // Smooth scroll fade down: automatically fades down and dismisses when user scrolls
+  const [scrollFadeOpacity, setScrollFadeOpacity] = useState<number>(1);
+  const [scrollFadeOffsetY, setScrollFadeOffsetY] = useState<number>(0);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setScrollFadeOpacity(1);
+      setScrollFadeOffsetY(0);
+      return;
+    }
+
+    const initialY = window.scrollY;
+    setScrollFadeOpacity(1);
+    setScrollFadeOffsetY(0);
+
+    const handleScroll = () => {
+      const delta = Math.abs(window.scrollY - initialY);
+      const fadeDist = 60;
+      if (delta <= 0) {
+        setScrollFadeOpacity(1);
+        setScrollFadeOffsetY(0);
+      } else if (delta < fadeDist) {
+        const ratio = 1 - delta / fadeDist;
+        setScrollFadeOpacity(ratio);
+        setScrollFadeOffsetY((1 - ratio) * 24);
+      } else {
+        setScrollFadeOpacity(0);
+        setScrollFadeOffsetY(24);
+        onClose();
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isOpen, onClose]);
+
   if (!isOpen || !section) return null;
 
   return (
     <div
       id="section-info-modal-backdrop"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-10 bg-black/80 backdrop-blur-md transition-opacity duration-200 select-none"
+      style={{ opacity: scrollFadeOpacity }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-10 bg-black/80 backdrop-blur-md transition-opacity duration-75 select-none"
       onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      onTouchStart={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
       aria-label={`Layer Information: ${section.name}`}
     >
       <div
         id="section-info-hud-card"
-        className="relative w-full max-w-2xl max-h-[88vh] overflow-y-auto bg-[#020a04]/95 border border-[#22c55e]/50 p-6 sm:p-8 font-matrix-mono text-neutral-200 shadow-[0_0_40px_rgba(34,197,94,0.25)]"
+        style={{
+          transform: `translate3d(0, ${scrollFadeOffsetY}px, 0)`,
+        }}
+        className="relative w-full max-w-2xl max-h-[88vh] overflow-y-auto bg-[#020a04]/95 border border-[#22c55e]/50 p-6 sm:p-8 font-matrix-mono text-neutral-200 shadow-[0_0_40px_rgba(34,197,94,0.25)] animate-matrix-pop-in will-change-transform"
       >
         {/* Cybernetic Corner Brackets */}
         <div className="absolute top-0 left-0 w-3.5 h-3.5 border-t-2 border-l-2 border-[#86efac]" />

@@ -55,10 +55,14 @@ export default function TriverseArtifact({ scrollProgress }: TriverseArtifactPro
             artifactGroup.remove(loadedModelRef.current);
             loadedModelRef.current.traverse((child) => {
               if (child instanceof THREE.Mesh) {
-                child.geometry?.dispose();
+                if (child.geometry && typeof child.geometry.dispose === 'function') {
+                  child.geometry.dispose();
+                }
                 if (Array.isArray(child.material)) {
-                  child.material.forEach((m) => m.dispose());
-                } else if (child.material) {
+                  child.material.forEach((m) => {
+                    if (m && typeof m.dispose === 'function') m.dispose();
+                  });
+                } else if (child.material && typeof child.material.dispose === 'function') {
                   child.material.dispose();
                 }
               }
@@ -398,10 +402,14 @@ export default function TriverseArtifact({ scrollProgress }: TriverseArtifactPro
       if (loadedModelRef.current) {
         loadedModelRef.current.traverse((child) => {
           if (child instanceof THREE.Mesh) {
-            child.geometry?.dispose();
+            if (child.geometry && typeof child.geometry.dispose === 'function') {
+              child.geometry.dispose();
+            }
             if (Array.isArray(child.material)) {
-              child.material.forEach((m) => m.dispose());
-            } else if (child.material) {
+              child.material.forEach((m) => {
+                if (m && typeof m.dispose === 'function') m.dispose();
+              });
+            } else if (child.material && typeof child.material.dispose === 'function') {
               child.material.dispose();
             }
           }

@@ -36,8 +36,10 @@ export default function VerticalProgress({
     <aside
       id={`cinematic-vertical-progress-${sectionCode}`}
       aria-label="Section Scroll Progress"
+      data-about-id="vertical-progress"
+      title="Tap to view Dimensional Depth Telemetry"
       style={{ opacity }}
-      className="fixed right-4 sm:right-8 top-1/2 -translate-y-1/2 z-30 pointer-events-none select-none flex flex-col items-center gap-2 font-matrix-mono transition-opacity duration-150"
+      className="fixed right-4 sm:right-8 top-1/2 -translate-y-1/2 z-30 pointer-events-auto cursor-pointer select-none flex flex-col items-center gap-2 font-matrix-mono transition-all duration-150 hover:brightness-125"
     >
       {/* Section Code Index */}
       <span className="text-[10px] sm:text-[11px] font-semibold text-[#86efac] tracking-[0.2em]">

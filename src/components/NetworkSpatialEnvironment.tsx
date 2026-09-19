@@ -19,6 +19,136 @@ import {
 import { ScreenAnchor } from './NetworkInformationDisplay.tsx';
 import { MemoryEventStage } from '../types/networkDiscovery.ts';
 
+// ----------------------------------------------------------------------------
+// Central 3D Sphere Artifact Model Procedural Textures
+// ----------------------------------------------------------------------------
+
+/**
+ * Creates high-detail technological cybernetic spherical map texture for the Central 3D Sphere Artifact Model
+ */
+function createSphereArtifactTexture(): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1024;
+  canvas.height = 512;
+  const ctx = canvas.getContext('2d');
+
+  if (ctx) {
+    ctx.clearRect(0, 0, 1024, 512);
+
+    // Deep technological tinted background panel
+    ctx.fillStyle = 'rgba(2, 22, 10, 0.85)';
+    ctx.fillRect(0, 0, 1024, 512);
+
+    // Latitude & Longitude precision grid
+    ctx.strokeStyle = 'rgba(34, 197, 94, 0.25)';
+    ctx.lineWidth = 1;
+
+    // Longitude lines
+    for (let x = 0; x <= 1024; x += 64) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, 512);
+      ctx.stroke();
+    }
+    // Latitude lines
+    for (let y = 0; y <= 512; y += 32) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(1024, y);
+      ctx.stroke();
+    }
+
+    // Glowing Equator Technical Data Ribbon
+    ctx.fillStyle = 'rgba(16, 185, 129, 0.16)';
+    ctx.fillRect(0, 230, 1024, 52);
+
+    ctx.strokeStyle = 'rgba(134, 239, 172, 0.75)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, 230);
+    ctx.lineTo(1024, 230);
+    ctx.moveTo(0, 282);
+    ctx.lineTo(1024, 282);
+    ctx.stroke();
+
+    // Equatorial Telemetry Text Stream
+    ctx.font = '600 16px "Share Tech Mono", monospace';
+    ctx.fillStyle = '#86efac';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(
+      '// 3D SPHERICAL ARTIFACT // SYNAPTIC CORE-NULL-00 // 18 NODES CONVERGED // THROUGHPUT: 480.2 PB/s // SYNCHRONY 99.9998% //',
+      24,
+      256
+    );
+
+    // Secondary data repeat for 360 wrap
+    ctx.fillText(
+      '// SPATIAL NEXUS // G_μν ⊗ N(V,E) // DET(A - λI)=0 // 18 OPTICAL CONDUITS DOCKED //',
+      620,
+      256
+    );
+
+    // Northern & Southern Tropic Guide Rings
+    ctx.strokeStyle = 'rgba(74, 222, 128, 0.45)';
+    ctx.setLineDash([8, 8]);
+    ctx.beginPath();
+    ctx.moveTo(0, 128);
+    ctx.lineTo(1024, 128);
+    ctx.moveTo(0, 384);
+    ctx.lineTo(1024, 384);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Major Cybernetic Nodes / Glyph Reticles distributed across the map
+    const glyphs = [
+      { x: 128, y: 128, text: '⬡ CORE +01', eq: 'Ψ_net' },
+      { x: 384, y: 128, text: 'Ψ WAVE-02', eq: 'iħ ∂Ψ/∂t' },
+      { x: 640, y: 128, text: 'Ω TOPOL-03', eq: 'd²=0' },
+      { x: 896, y: 128, text: 'ℝ⁴ ARTIFACT', eq: 'G_μν' },
+      { x: 256, y: 384, text: 'λ EIGEN-05', eq: 'det(A-λI)' },
+      { x: 512, y: 384, text: 'H(X) ENTROPY', eq: '-∑ p log p' },
+      { x: 768, y: 384, text: 'N(18) LINKED', eq: 'V ⊗ E' },
+    ];
+
+    glyphs.forEach((g) => {
+      ctx.strokeStyle = 'rgba(134, 239, 172, 0.7)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(g.x, g.y, 34, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.fillStyle = 'rgba(74, 222, 128, 0.15)';
+      ctx.fill();
+
+      // Crosshairs
+      ctx.beginPath();
+      ctx.moveTo(g.x - 44, g.y);
+      ctx.lineTo(g.x + 44, g.y);
+      ctx.moveTo(g.x, g.y - 44);
+      ctx.lineTo(g.x, g.y + 44);
+      ctx.stroke();
+
+      // Label
+      ctx.font = '600 13px "Share Tech Mono", monospace';
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.fillText(g.text, g.x, g.y - 8);
+
+      ctx.font = '500 11px "Share Tech Mono", monospace';
+      ctx.fillStyle = '#86efac';
+      ctx.fillText(g.eq, g.x, g.y + 12);
+    });
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.minFilter = THREE.LinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.ClampToEdgeWrapping;
+  texture.generateMipmaps = false;
+  return texture;
+}
+
 interface NetworkSpatialEnvironmentProps {
   /**
    * Scroll progress within Section 3 (0.0 to 1.0).
@@ -94,6 +224,7 @@ export default function NetworkSpatialEnvironment({
 
   // Flash one-shot trigger latch
   const hasFlashedRef = useRef(false);
+  const interactiveScaleBoostRef = useRef<number>(1.0);
 
   useEffect(() => {
     progressRef.current = scrollProgress;
@@ -233,93 +364,173 @@ export default function NetworkSpatialEnvironment({
     const glowTexture = createGlowTexture();
 
     // ------------------------------------------------------------------------
-    // 6. BUILD CENTRAL OBJECT (CENTRAL_ENTITY)
+    // 6. BUILD CENTRAL 3D SPHERE ARTIFACT MODEL (CENTRAL_ENTITY)
     // ------------------------------------------------------------------------
     const centralComponents: {
-      outerShell: THREE.Mesh;
+      artifactModelGroup: THREE.Group;
+      sphereMesh: THREE.Mesh;
+      sphereTexture: THREE.CanvasTexture;
+      sphereMaterial: THREE.MeshBasicMaterial;
       outerWire: THREE.LineSegments;
-      outerRing: THREE.LineLoop;
-      innerRing: THREE.LineLoop;
+      dockNodesGroup: THREE.Group;
+      dockNodeMeshes: THREE.Mesh[];
+      innerSphereGroup: THREE.Group;
+      innerEdges: THREE.LineSegments;
+      innerFaceMesh: THREE.Mesh;
+      meridianLines: THREE.LineSegments;
       innerCore: THREE.Mesh;
       innerWire: THREE.LineSegments;
+      outerRing: THREE.LineLoop;
+      innerRing: THREE.LineLoop;
+      polarRing: THREE.LineLoop;
+      shardGroup: THREE.Group;
+      shardMeshes: THREE.Mesh[];
       haloSprite: THREE.Sprite;
-      feederLines: THREE.LineSegments;
       encounterAura: THREE.Sprite;
+      centralCollider: THREE.Mesh;
     } = {} as any;
 
+    const baseSphereRadius = 32;
+
     const buildCentralEntity = () => {
-      const scale = CENTRAL_ENTITY_DATA.scale; // ~30
+      // Group holding all components of the 3D Sphere Artifact Model
+      const artifactModelGroup = new THREE.Group();
+      artifactModelGroup.name = 'CENTRAL_SPHERE_ARTIFACT_MODEL';
+      centralEntityGroup.add(artifactModelGroup);
+      centralComponents.artifactModelGroup = artifactModelGroup;
 
-      const shellGeo = new THREE.IcosahedronGeometry(scale, 1);
-      const shellMat = new THREE.MeshStandardMaterial({
-        color: 0x050d08,
-        roughness: 0.32,
-        metalness: 0.88,
-        transparent: true,
-        opacity: 0,
-        flatShading: true,
-      });
-      const outerShell = new THREE.Mesh(shellGeo, shellMat);
-      centralEntityGroup.add(outerShell);
-      centralComponents.outerShell = outerShell;
+      // 1. High-Detail Cybernetic Spherical Texture & Shell
+      const sphereTexture = createSphereArtifactTexture();
+      centralComponents.sphereTexture = sphereTexture;
 
-      const shellWireGeo = new THREE.WireframeGeometry(shellGeo);
-      const shellWireMat = new THREE.LineBasicMaterial({
-        color: new THREE.Color('#4ade80'),
+      const sphereGeo = new THREE.SphereGeometry(baseSphereRadius, 40, 40);
+      const sphereMaterial = new THREE.MeshBasicMaterial({
+        map: sphereTexture,
         transparent: true,
         opacity: 0,
         blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        side: THREE.DoubleSide,
       });
-      const outerWire = new THREE.LineSegments(shellWireGeo, shellWireMat);
-      outerShell.add(outerWire);
+      const sphereMesh = new THREE.Mesh(sphereGeo, sphereMaterial);
+      artifactModelGroup.add(sphereMesh);
+      centralComponents.sphereMesh = sphereMesh;
+      centralComponents.sphereMaterial = sphereMaterial;
+
+      // 2. Geodesic Crystalline Outer Wireframe Shell
+      const outerGeodesicGeo = new THREE.WireframeGeometry(new THREE.IcosahedronGeometry(baseSphereRadius * 1.03, 2));
+      const outerEdgesMat = new THREE.LineBasicMaterial({
+        color: new THREE.Color('#4ade80'),
+        transparent: true,
+        opacity: 0,
+        linewidth: 2,
+        blending: THREE.AdditiveBlending,
+      });
+      const outerWire = new THREE.LineSegments(outerGeodesicGeo, outerEdgesMat);
+      sphereMesh.add(outerWire);
       centralComponents.outerWire = outerWire;
 
-      const outerRingGeo = new THREE.BufferGeometry();
-      const outerPts: number[] = [];
-      const segs = 64;
-      const rOuter = scale * 1.55;
-      for (let i = 0; i <= segs; i++) {
-        const theta = (i / segs) * Math.PI * 2;
-        outerPts.push(Math.cos(theta) * rOuter, Math.sin(theta) * rOuter, 0);
-      }
-      outerRingGeo.setAttribute('position', new THREE.Float32BufferAttribute(outerPts, 3));
-      const outerRingMat = new THREE.LineBasicMaterial({
+      // 3. 18 Glowing Surface Docking Terminals on the Sphere Surface (one for each network node!)
+      const dockNodesGroup = new THREE.Group();
+      const dockNodeMeshes: THREE.Mesh[] = [];
+      const dockGeo = new THREE.OctahedronGeometry(2.6, 0);
+      const dockMat = new THREE.MeshBasicMaterial({
         color: new THREE.Color('#86efac'),
         transparent: true,
         opacity: 0,
         blending: THREE.AdditiveBlending,
       });
-      const outerRing = new THREE.LineLoop(outerRingGeo, outerRingMat);
-      outerRing.rotation.x = Math.PI * 0.28;
-      centralEntityGroup.add(outerRing);
-      centralComponents.outerRing = outerRing;
 
-      const innerRingGeo = new THREE.BufferGeometry();
-      const innerPts: number[] = [];
-      const rInner = scale * 1.3;
-      for (let i = 0; i <= segs; i++) {
-        const theta = (i / segs) * Math.PI * 2;
-        innerPts.push(Math.cos(theta) * rInner, 0, Math.sin(theta) * rInner);
-      }
-      innerRingGeo.setAttribute('position', new THREE.Float32BufferAttribute(innerPts, 3));
-      const innerRingMat = new THREE.LineBasicMaterial({
+      NETWORK_NODES.forEach((node) => {
+        const nodePos = new THREE.Vector3(...node.position);
+        const relDir = nodePos.clone().sub(centralEntityGroup.position).normalize();
+        const dockPos = relDir.clone().multiplyScalar(baseSphereRadius);
+
+        const dockNode = new THREE.Mesh(dockGeo, dockMat);
+        dockNode.position.copy(dockPos);
+        dockNode.lookAt(dockPos.clone().multiplyScalar(2));
+        dockNodesGroup.add(dockNode);
+        dockNodeMeshes.push(dockNode);
+      });
+      sphereMesh.add(dockNodesGroup);
+      centralComponents.dockNodesGroup = dockNodesGroup;
+      centralComponents.dockNodeMeshes = dockNodeMeshes;
+
+      // 4. Inner Concentric 3D Spherical Structure (Counter-rotating nested structure)
+      const innerSphereGroup = new THREE.Group();
+      artifactModelGroup.add(innerSphereGroup);
+      centralComponents.innerSphereGroup = innerSphereGroup;
+
+      const innerSphereRadius = baseSphereRadius * 0.62;
+      const innerSphereGeo = new THREE.IcosahedronGeometry(innerSphereRadius, 2);
+      const innerEdgesMat = new THREE.LineBasicMaterial({
         color: new THREE.Color('#22c55e'),
         transparent: true,
         opacity: 0,
         blending: THREE.AdditiveBlending,
+        linewidth: 1.5,
       });
-      const innerRing = new THREE.LineLoop(innerRingGeo, innerRingMat);
-      centralEntityGroup.add(innerRing);
-      centralComponents.innerRing = innerRing;
+      const innerEdges = new THREE.LineSegments(new THREE.WireframeGeometry(innerSphereGeo), innerEdgesMat);
+      innerSphereGroup.add(innerEdges);
+      centralComponents.innerEdges = innerEdges;
 
-      const coreGeo = new THREE.OctahedronGeometry(scale * 0.55, 0);
-      const coreMat = new THREE.MeshBasicMaterial({
+      const innerFaceMat = new THREE.MeshBasicMaterial({
+        color: new THREE.Color('#14532d'),
+        transparent: true,
+        opacity: 0,
+        wireframe: true,
+        blending: THREE.AdditiveBlending,
+      });
+      const innerFaceMesh = new THREE.Mesh(innerSphereGeo, innerFaceMat);
+      innerSphereGroup.add(innerFaceMesh);
+      centralComponents.innerFaceMesh = innerFaceMesh;
+
+      // 5. Spherical Quantum Filaments (Dynamic Meridian Flux Arcs)
+      const meridianCount = 16;
+      const meridianPts: number[] = [];
+      for (let m = 0; m < meridianCount; m++) {
+        const angle = (m / meridianCount) * Math.PI * 2;
+        const ptsPerMeridian = 24;
+        for (let pIdx = 0; pIdx < ptsPerMeridian; pIdx++) {
+          const lat = -Math.PI / 2 + (pIdx / (ptsPerMeridian - 1)) * Math.PI;
+          const nextLat = -Math.PI / 2 + ((pIdx + 1) / (ptsPerMeridian - 1)) * Math.PI;
+          if (pIdx < ptsPerMeridian - 1) {
+            const r = baseSphereRadius * 0.85;
+            meridianPts.push(
+              Math.cos(lat) * Math.cos(angle) * r,
+              Math.sin(lat) * r,
+              Math.cos(lat) * Math.sin(angle) * r,
+              Math.cos(nextLat) * Math.cos(angle) * r,
+              Math.sin(nextLat) * r,
+              Math.cos(nextLat) * Math.sin(angle) * r
+            );
+          }
+        }
+      }
+      const meridianGeo = new THREE.BufferGeometry();
+      meridianGeo.setAttribute('position', new THREE.Float32BufferAttribute(meridianPts, 3));
+      const meridianMat = new THREE.LineBasicMaterial({
         color: new THREE.Color('#86efac'),
         transparent: true,
         opacity: 0,
+        blending: THREE.AdditiveBlending,
+        linewidth: 1.5,
+      });
+      const meridianLines = new THREE.LineSegments(meridianGeo, meridianMat);
+      innerSphereGroup.add(meridianLines);
+      centralComponents.meridianLines = meridianLines;
+
+      // 6. Central Quantum Singularity Core
+      const coreGeo = new THREE.IcosahedronGeometry(baseSphereRadius * 0.28, 1);
+      const coreMat = new THREE.MeshBasicMaterial({
+        color: new THREE.Color('#86efac'),
+        wireframe: true,
+        transparent: true,
+        opacity: 0,
+        blending: THREE.AdditiveBlending,
       });
       const innerCore = new THREE.Mesh(coreGeo, coreMat);
-      centralEntityGroup.add(innerCore);
+      artifactModelGroup.add(innerCore);
       centralComponents.innerCore = innerCore;
 
       const innerWireGeo = new THREE.WireframeGeometry(coreGeo);
@@ -333,6 +544,72 @@ export default function NetworkSpatialEnvironment({
       innerCore.add(innerWire);
       centralComponents.innerWire = innerWire;
 
+      // 7. Triple Orbital Armillary Gimbal Rings
+      const createRing = (radius: number, colorStr: string, rotX: number, rotY: number) => {
+        const ringGeo = new THREE.BufferGeometry();
+        const pts: number[] = [];
+        const segs = 72;
+        for (let i = 0; i <= segs; i++) {
+          const theta = (i / segs) * Math.PI * 2;
+          pts.push(Math.cos(theta) * radius, Math.sin(theta) * radius, 0);
+        }
+        ringGeo.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+        const ringMat = new THREE.LineBasicMaterial({
+          color: new THREE.Color(colorStr),
+          transparent: true,
+          opacity: 0,
+          blending: THREE.AdditiveBlending,
+        });
+        const ring = new THREE.LineLoop(ringGeo, ringMat);
+        ring.rotation.x = rotX;
+        ring.rotation.y = rotY;
+        return ring;
+      };
+
+      const outerRing = createRing(baseSphereRadius * 1.42, '#86efac', Math.PI * 0.28, 0);
+      artifactModelGroup.add(outerRing);
+      centralComponents.outerRing = outerRing;
+
+      const innerRing = createRing(baseSphereRadius * 1.22, '#22c55e', 0, Math.PI * 0.5);
+      artifactModelGroup.add(innerRing);
+      centralComponents.innerRing = innerRing;
+
+      const polarRing = createRing(baseSphereRadius * 1.58, '#4ade80', Math.PI * 0.45, Math.PI * 0.25);
+      artifactModelGroup.add(polarRing);
+      centralComponents.polarRing = polarRing;
+
+      // 8. Orbiting Crystalline Shards (Triverse Artifact Heritage)
+      const shardGroup = new THREE.Group();
+      const shardMeshes: THREE.Mesh[] = [];
+      const shardCount = 10;
+      const shardGeo = new THREE.TetrahedronGeometry(2.4, 0);
+      const shardMat = new THREE.MeshBasicMaterial({
+        color: new THREE.Color('#bbf7d0'),
+        wireframe: true,
+        transparent: true,
+        opacity: 0,
+        blending: THREE.AdditiveBlending,
+      });
+
+      for (let s = 0; s < shardCount; s++) {
+        const phi = (s / shardCount) * Math.PI * 2;
+        const theta = (s % 2 === 0 ? 0.35 : -0.35) * Math.PI;
+        const rad = baseSphereRadius * 1.68;
+        const sx = Math.cos(theta) * Math.cos(phi) * rad;
+        const sy = Math.sin(theta) * rad;
+        const sz = Math.cos(theta) * Math.sin(phi) * rad;
+
+        const shard = new THREE.Mesh(shardGeo, shardMat);
+        shard.position.set(sx, sy, sz);
+        shard.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
+        shardGroup.add(shard);
+        shardMeshes.push(shard);
+      }
+      artifactModelGroup.add(shardGroup);
+      centralComponents.shardGroup = shardGroup;
+      centralComponents.shardMeshes = shardMeshes;
+
+      // 9. Halo & Aura Sprites
       const haloMat = new THREE.SpriteMaterial({
         map: glowTexture,
         color: new THREE.Color('#86efac'),
@@ -341,9 +618,9 @@ export default function NetworkSpatialEnvironment({
         blending: THREE.AdditiveBlending,
       });
       const haloSprite = new THREE.Sprite(haloMat);
-      const haloDim = scale * 5.2;
+      const haloDim = baseSphereRadius * 4.6;
       haloSprite.scale.set(haloDim, haloDim, 1);
-      centralEntityGroup.add(haloSprite);
+      artifactModelGroup.add(haloSprite);
       centralComponents.haloSprite = haloSprite;
 
       const auraMat = new THREE.SpriteMaterial({
@@ -354,41 +631,19 @@ export default function NetworkSpatialEnvironment({
         blending: THREE.AdditiveBlending,
       });
       const encounterAura = new THREE.Sprite(auraMat);
-      encounterAura.scale.set(scale * 8.0, scale * 8.0, 1);
-      centralEntityGroup.add(encounterAura);
+      encounterAura.scale.set(baseSphereRadius * 6.8, baseSphereRadius * 6.8, 1);
+      artifactModelGroup.add(encounterAura);
       centralComponents.encounterAura = encounterAura;
 
-      const feederGeo = new THREE.BufferGeometry();
-      const feederPts: number[] = [];
-      const feederTargets = [
-        [0, 36, -100],
-        [-120, 45, -30],
-        [140, -30, -70],
-        [-60, -50, 40],
-        [70, 60, -20],
-      ];
-      feederTargets.forEach((tgt) => {
-        feederPts.push(0, 0, 0, tgt[0], tgt[1], tgt[2]);
-      });
-      feederGeo.setAttribute('position', new THREE.Float32BufferAttribute(feederPts, 3));
-      const feederMat = new THREE.LineBasicMaterial({
-        color: new THREE.Color('#4ade80'),
-        transparent: true,
-        opacity: 0,
-        blending: THREE.AdditiveBlending,
-      });
-      const feederLines = new THREE.LineSegments(feederGeo, feederMat);
-      centralEntityGroup.add(feederLines);
-      centralComponents.feederLines = feederLines;
-
-      // Add interactive hit collider for CENTRAL_ENTITY
-      const centralHitGeo = new THREE.SphereGeometry(scale * 1.5, 8, 8);
+      // 10. Interactive hit collider for CENTRAL_ENTITY (Spherical target)
+      const centralHitGeo = new THREE.SphereGeometry(baseSphereRadius * 1.45, 16, 16);
       const hitMat = new THREE.MeshBasicMaterial({ visible: false });
       const centralCollider = new THREE.Mesh(centralHitGeo, hitMat);
       centralCollider.name = 'COLLIDER_CENTRAL_ENTITY';
       centralCollider.userData = { interactiveId: 'CENTRAL_ENTITY' };
       centralEntityGroup.add(centralCollider);
       interactiveColliders.push(centralCollider);
+      centralComponents.centralCollider = centralCollider;
 
       objectPosGetterMap.set('CENTRAL_ENTITY', () => centralEntityGroup.position);
     };
@@ -552,9 +807,9 @@ export default function NetworkSpatialEnvironment({
       haloSprite.scale.set(haloDim, haloDim, 1);
       nodeGroup.add(haloSprite);
 
-      let activation = 0.08 + (idx / NETWORK_NODES.length) * 0.24;
-      if (node.id === 'NODE_001' || node.id === 'NODE_002') {
-        activation = 0.08;
+      let activation = 0.02 + (idx / NETWORK_NODES.length) * 0.16;
+      if (node.id === 'NODE_001' || node.id === 'NODE_002' || node.id === 'NODE_010' || node.id === 'NODE_011') {
+        activation = 0.02;
       }
 
       nodeMeshes.push({
@@ -585,6 +840,81 @@ export default function NetworkSpatialEnvironment({
         objectPosGetterMap.set(node.id, () => nodeGroup.position);
       }
     });
+
+    // ------------------------------------------------------------------------
+    // 7B. ALL-NODE DYNAMIC CONDUITS CONNECTED TO CENTRAL 3D SPHERE ARTIFACT MODEL
+    // Connects all 18 nodes directly to the surface of the central 3D sphere artifact
+    // ------------------------------------------------------------------------
+    const allNodeConduitsGroup = new THREE.Group();
+    allNodeConduitsGroup.name = 'ALL_NODE_CONDUITS';
+    worldGroup.add(allNodeConduitsGroup);
+
+    const allNodeConduits: {
+      nodeId: string;
+      line: THREE.Line;
+      geometry: THREE.BufferGeometry;
+      material: THREE.LineBasicMaterial;
+      originNodePos: THREE.Vector3;
+      surfaceDockDir: THREE.Vector3;
+    }[] = [];
+
+    NETWORK_NODES.forEach((node) => {
+      const nodePos = nodePositionMap.get(node.id);
+      if (!nodePos) return;
+
+      const relDir = nodePos.clone().sub(centralEntityGroup.position).normalize();
+
+      const geo = new THREE.BufferGeometry();
+      const pts = new Float32Array([
+        nodePos.x, nodePos.y, nodePos.z,
+        nodePos.x, nodePos.y, nodePos.z,
+      ]);
+      geo.setAttribute('position', new THREE.BufferAttribute(pts, 3));
+
+      const mat = new THREE.LineBasicMaterial({
+        color: new THREE.Color(node.id === 'NODE_001' ? '#bbf7d0' : '#4ade80'),
+        transparent: true,
+        opacity: 0,
+        blending: THREE.AdditiveBlending,
+        linewidth: 1.5,
+      });
+
+      const line = new THREE.Line(geo, mat);
+      line.name = `CENTRAL_CONDUIT_${node.id}`;
+      allNodeConduitsGroup.add(line);
+
+      allNodeConduits.push({
+        nodeId: node.id,
+        line,
+        geometry: geo,
+        material: mat,
+        originNodePos: nodePos,
+        surfaceDockDir: relDir,
+      });
+    });
+
+    // Dynamic data packet pulses flowing between nodes and the central 3D sphere artifact model
+    const conduitPulseCount = 42;
+    const conduitPulseGeo = new THREE.BufferGeometry();
+    const conduitPulsePositions = new Float32Array(conduitPulseCount * 3);
+    conduitPulseGeo.setAttribute('position', new THREE.BufferAttribute(conduitPulsePositions, 3));
+    const conduitPulseMat = new THREE.PointsMaterial({
+      color: new THREE.Color('#bbf7d0'),
+      size: 8.5,
+      map: glowTexture,
+      transparent: true,
+      opacity: 0,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    const conduitPulsePoints = new THREE.Points(conduitPulseGeo, conduitPulseMat);
+    allNodeConduitsGroup.add(conduitPulsePoints);
+
+    const conduitPulses = Array.from({ length: conduitPulseCount }, (_, i) => ({
+      conduitIdx: i % Math.max(1, allNodeConduits.length),
+      t: Math.random(),
+      speed: 0.007 + Math.random() * 0.012,
+    }));
 
     // ------------------------------------------------------------------------
     // 8. BUILD FLOWING DATA WAVES
@@ -1343,7 +1673,7 @@ export default function NetworkSpatialEnvironment({
       worldGroup.rotation.x = Math.cos(time * 0.018) * 0.008;
 
       // ----------------------------------------------------------------------
-      // B. CENTRAL OBJECT MOVEMENT & CONVERGENCE PHASES
+      // B. CENTRAL OBJECT MOVEMENT, ROTATION & DYNAMIC INCREASING SIZE
       // ----------------------------------------------------------------------
       centralEntityGroup.position.copy(currentCentralPos);
 
@@ -1355,41 +1685,113 @@ export default function NetworkSpatialEnvironment({
       centralEntityGroup.quaternion.slerp(targetQuat, 0.08);
 
       let centralOpacity = 0;
-      if (p >= 0.06) {
-        centralOpacity = Math.min(1, (p - 0.06) / 0.12);
+      if (p >= 0.04) {
+        centralOpacity = Math.min(1, (p - 0.04) / 0.10);
       }
 
       const isCentralSelected = activeSelectedId === 'CENTRAL_ENTITY';
       const isCentralHovered = activeHoveredId === 'CENTRAL_ENTITY';
-      const centralBoost = isCentralSelected ? 0.3 : isCentralHovered ? 0.15 : 0;
+      const centralBoost = isCentralSelected ? 0.35 : isCentralHovered ? 0.18 : 0;
 
       // Memory Event Reactivity (Step 4: Network Remembers)
       const currentDiscStage = discoveryStageRef.current;
       const isMemoryEventActive = currentDiscStage === 'pattern_established' || currentDiscStage === 'absorbed';
       const memoryBoost = currentDiscStage === 'absorbed' ? 0.55 : currentDiscStage === 'pattern_established' ? 0.32 : 0;
 
-      if (centralComponents.outerShell) {
-        centralComponents.outerShell.rotation.y += delta * (0.22 + centralBoost + convergenceIntensity * 0.8 + memoryBoost * 0.6);
-        centralComponents.outerShell.rotation.x = Math.sin(time * 0.3) * 0.1;
+      // 1. DYNAMIC INCREASING SIZE
+      // - Progressive growth as user traverses deeper into the network (0.85 -> 2.45x)
+      // - Organic breathing expansion pulse
+      // - Interactive swell on hover (+22%) and selection (+42%)
+      // - Convergence and memory burst surge
+      const scrollScaleFactor = 0.85 + Math.pow(Math.min(1, p / 0.90), 1.25) * 1.55;
+      const breathScale = 1.0 + Math.sin(time * 2.4) * 0.08;
+      const targetInteractiveBoost = isCentralSelected ? 1.42 : isCentralHovered ? 1.22 : 1.0;
+      interactiveScaleBoostRef.current = THREE.MathUtils.lerp(interactiveScaleBoostRef.current, targetInteractiveBoost, 0.08);
+      const eventScaleBoost = 1.0 + convergenceIntensity * 0.55 + flash3DBurst * 1.6 + memoryBoost * 0.3;
 
-        const shellMat = centralComponents.outerShell.material as THREE.MeshStandardMaterial;
-        shellMat.opacity = Math.min(1, (centralOpacity + centralBoost + convergenceIntensity * 0.2 + memoryBoost * 0.2) * 0.88);
-
-        const wireMat = centralComponents.outerWire.material as THREE.LineBasicMaterial;
-        wireMat.opacity = Math.min(1, (centralOpacity + centralBoost + convergenceIntensity * 0.25 + memoryBoost * 0.25) * 0.78);
+      const totalSphereScale = scrollScaleFactor * breathScale * interactiveScaleBoostRef.current * eventScaleBoost;
+      if (centralComponents.artifactModelGroup) {
+        centralComponents.artifactModelGroup.scale.set(totalSphereScale, totalSphereScale, totalSphereScale);
+      }
+      if (centralComponents.centralCollider) {
+        centralComponents.centralCollider.scale.set(totalSphereScale, totalSphereScale, totalSphereScale);
       }
 
-      if (centralComponents.outerRing && centralComponents.innerRing) {
-        centralComponents.outerRing.rotation.z += delta * (0.38 + centralBoost * 0.6 + convergenceIntensity * 2.2 + memoryBoost * 1.6);
-        centralComponents.innerRing.rotation.y -= delta * (0.44 + centralBoost * 0.6 + convergenceIntensity * 2.5 + memoryBoost * 1.8);
+      // 2. DYNAMIC CONTINUOUS ROTATION
+      const rotSpeed = delta * (0.35 + centralBoost * 0.4 + convergenceIntensity * 0.9 + memoryBoost * 0.6);
+      if (centralComponents.sphereMesh) {
+        centralComponents.sphereMesh.rotation.y += rotSpeed;
+        centralComponents.sphereMesh.rotation.x = Math.sin(time * 0.45) * 0.18 + (isCentralHovered ? 0.08 : 0);
+        centralComponents.sphereMesh.rotation.z = Math.cos(time * 0.35) * 0.10;
+
+        if (centralComponents.sphereMaterial) {
+          centralComponents.sphereMaterial.opacity = Math.min(1, (centralOpacity + centralBoost + convergenceIntensity * 0.25 + memoryBoost * 0.25) * 0.88);
+        }
+      }
+
+      if (centralComponents.outerWire) {
+        const wireMat = centralComponents.outerWire.material as THREE.LineBasicMaterial;
+        wireMat.opacity = Math.min(1, (centralOpacity + centralBoost + convergenceIntensity * 0.3 + memoryBoost * 0.3) * 0.85);
+      }
+
+      if (centralComponents.dockNodesGroup) {
+        centralComponents.dockNodesGroup.children.forEach((dNode: any) => {
+          if (dNode.material) {
+            dNode.material.opacity = Math.min(1, (centralOpacity + centralBoost + convergenceIntensity * 0.3) * 0.95);
+          }
+        });
+      }
+
+      // Counter-rotating inner concentric spherical structure
+      if (centralComponents.innerSphereGroup) {
+        centralComponents.innerSphereGroup.rotation.y -= delta * (0.52 + centralBoost * 0.5 + convergenceIntensity * 1.3 + memoryBoost * 0.8);
+        centralComponents.innerSphereGroup.rotation.x -= delta * (0.34 + convergenceIntensity * 0.8);
+        centralComponents.innerSphereGroup.rotation.z += delta * 0.22;
+
+        if (centralComponents.innerEdges) {
+          const iEdgesMat = centralComponents.innerEdges.material as THREE.LineBasicMaterial;
+          iEdgesMat.opacity = Math.min(1, (centralOpacity + centralBoost + convergenceIntensity * 0.3) * 0.75);
+        }
+        if (centralComponents.innerFaceMesh) {
+          const iFaceMat = centralComponents.innerFaceMesh.material as THREE.MeshBasicMaterial;
+          iFaceMat.opacity = Math.min(1, (centralOpacity + centralBoost + convergenceIntensity * 0.25) * 0.40);
+        }
+        if (centralComponents.meridianLines) {
+          const mMat = centralComponents.meridianLines.material as THREE.LineBasicMaterial;
+          mMat.opacity = Math.min(1, (centralOpacity + centralBoost + convergenceIntensity * 0.35 + memoryBoost * 0.3) * 0.78);
+        }
+      }
+
+      // Orbital Armillary Gimbal Rings
+      if (centralComponents.outerRing && centralComponents.innerRing && centralComponents.polarRing) {
+        centralComponents.outerRing.rotation.z += delta * (0.40 + centralBoost * 0.6 + convergenceIntensity * 2.2 + memoryBoost * 1.6);
+        centralComponents.innerRing.rotation.y -= delta * (0.46 + centralBoost * 0.6 + convergenceIntensity * 2.5 + memoryBoost * 1.8);
+        centralComponents.polarRing.rotation.x += delta * (0.32 + centralBoost * 0.4 + convergenceIntensity * 1.8 + memoryBoost * 1.2);
 
         const oRingMat = centralComponents.outerRing.material as THREE.LineBasicMaterial;
         oRingMat.opacity = Math.min(1, (centralOpacity + centralBoost + convergenceIntensity * 0.3 + memoryBoost * 0.3) * 0.72);
 
         const iRingMat = centralComponents.innerRing.material as THREE.LineBasicMaterial;
         iRingMat.opacity = Math.min(1, (centralOpacity + centralBoost + convergenceIntensity * 0.3 + memoryBoost * 0.3) * 0.62);
+
+        const pRingMat = centralComponents.polarRing.material as THREE.LineBasicMaterial;
+        pRingMat.opacity = Math.min(1, (centralOpacity + centralBoost + convergenceIntensity * 0.3 + memoryBoost * 0.3) * 0.68);
       }
 
+      // Orbiting Crystalline Shards (Triverse Artifact Heritage)
+      if (centralComponents.shardGroup && centralComponents.shardMeshes) {
+        centralComponents.shardGroup.rotation.y += delta * (0.28 + convergenceIntensity * 0.7 + memoryBoost * 0.5);
+        centralComponents.shardGroup.rotation.x = Math.sin(time * 0.4) * 0.12;
+
+        centralComponents.shardMeshes.forEach((shard, sIdx) => {
+          shard.rotation.x += delta * (0.4 + sIdx * 0.05);
+          shard.rotation.y += delta * (0.6 + sIdx * 0.08);
+          const sMat = shard.material as THREE.MeshBasicMaterial;
+          sMat.opacity = Math.min(1, (centralOpacity + centralBoost + convergenceIntensity * 0.3 + memoryBoost * 0.3) * 0.85);
+        });
+      }
+
+      // Central Quantum Singularity Core
       if (centralComponents.innerCore) {
         const isStillnessPhase = p >= 0.965 && p < 0.975;
         const pulseFreq = isStillnessPhase ? 1.0 : (2.8 + centralBoost * 2 + convergenceIntensity * 4.0 + memoryBoost * 3.2);
@@ -1426,21 +1828,80 @@ export default function NetworkSpatialEnvironment({
         const hMat = centralComponents.haloSprite.material as THREE.SpriteMaterial;
         hMat.opacity = (centralOpacity + centralBoost + convergenceIntensity * 0.35 + memoryBoost * 0.4) * 0.8 * haloPulse;
         if (isCentralSelected) {
-          const dim = CENTRAL_ENTITY_DATA.scale * 6.5;
+          const dim = 64 * totalSphereScale * 2.5;
           centralComponents.haloSprite.scale.set(dim, dim, 1);
         } else if (isMemoryEventActive) {
-          const dim = CENTRAL_ENTITY_DATA.scale * 4.2 * (1.0 + memoryBoost * 0.4);
+          const dim = 64 * totalSphereScale * 1.8 * (1.0 + memoryBoost * 0.4);
           centralComponents.haloSprite.scale.set(dim, dim, 1);
         }
       }
 
-      if (centralComponents.feederLines) {
-        const fMat = centralComponents.feederLines.material as THREE.LineBasicMaterial;
-        fMat.opacity = Math.max(
-          (centralOpacity + centralBoost + convergenceIntensity * 0.4) * (0.3 + Math.sin(time * 3.0) * 0.15),
-          memoryBoost * 0.65
-        );
-      }
+      // 3. UPDATE ALL 18 NODE CONDUITS DYNAMICALLY CONNECTED TO CENTRAL 3D SPHERE ARTIFACT MODEL
+      const conduitPulsePosArray = conduitPulseGeo.attributes.position.array as Float32Array;
+      const sphereEuler = centralComponents.sphereMesh ? centralComponents.sphereMesh.rotation : new THREE.Euler();
+
+      allNodeConduits.forEach((conduit, cIdx) => {
+        const { geometry, material, originNodePos, surfaceDockDir, nodeId } = conduit;
+        const isNodeSelected = activeSelectedId === nodeId;
+        const isNodeHovered = activeHoveredId === nodeId;
+        const isDiscovered = discoveredIdsRef.current.includes(nodeId);
+
+        // Compute surface dock position on the rotating, scaled 3D sphere artifact in world coordinates
+        const dockLocal = surfaceDockDir.clone().multiplyScalar(baseSphereRadius * totalSphereScale);
+        dockLocal.applyEuler(sphereEuler);
+        dockLocal.applyQuaternion(centralEntityGroup.quaternion);
+        const dockPos = dockLocal.add(currentCentralPos);
+
+        const posAttr = geometry.attributes.position;
+        posAttr.setXYZ(0, originNodePos.x, originNodePos.y, originNodePos.z);
+        posAttr.setXYZ(1, dockPos.x, dockPos.y, dockPos.z);
+        posAttr.needsUpdate = true;
+
+        if (isNodeSelected || isNodeHovered) {
+          material.opacity = 0.95;
+          material.color.set('#ffffff');
+        } else if (isCentralSelected) {
+          material.opacity = 0.82;
+          material.color.set('#86efac');
+        } else if (isCentralHovered) {
+          material.opacity = 0.65;
+          material.color.set('#4ade80');
+        } else if (isDiscovered && isMemoryEventActive) {
+          material.opacity = 0.85;
+          material.color.set('#86efac');
+        } else {
+          material.opacity = Math.max(0.08, (centralOpacity * 0.32) + (Math.sin(time * 2.5 + cIdx) * 0.08));
+          material.color.set('#34d399');
+        }
+      });
+
+      // Conduit active data pulses flowing into the central 3D sphere artifact model
+      let pulsePtr = 0;
+      conduitPulses.forEach((pulse) => {
+        const conduit = allNodeConduits[pulse.conduitIdx];
+        if (!conduit) return;
+
+        const isNodeSelected = activeSelectedId === conduit.nodeId;
+        const isNodeHovered = activeHoveredId === conduit.nodeId;
+        const speedMultiplier = (isNodeSelected || isNodeHovered || isCentralSelected) ? 3.0 : 1.0;
+
+        pulse.t = (pulse.t + delta * pulse.speed * speedMultiplier) % 1.0;
+
+        const dockLocal = conduit.surfaceDockDir.clone().multiplyScalar(baseSphereRadius * totalSphereScale);
+        dockLocal.applyEuler(sphereEuler);
+        dockLocal.applyQuaternion(centralEntityGroup.quaternion);
+        const dockPos = dockLocal.add(currentCentralPos);
+
+        const px = conduit.originNodePos.x + (dockPos.x - conduit.originNodePos.x) * pulse.t;
+        const py = conduit.originNodePos.y + (dockPos.y - conduit.originNodePos.y) * pulse.t;
+        const pz = conduit.originNodePos.z + (dockPos.z - conduit.originNodePos.z) * pulse.t;
+
+        conduitPulsePosArray[pulsePtr++] = px;
+        conduitPulsePosArray[pulsePtr++] = py;
+        conduitPulsePosArray[pulsePtr++] = pz;
+      });
+      conduitPulseGeo.attributes.position.needsUpdate = true;
+      conduitPulseMat.opacity = Math.min(1, (centralOpacity + centralBoost + convergenceIntensity * 0.4) * 0.85);
 
       // ----------------------------------------------------------------------
       // B2. CONVERGENCE FILAMENTS & SIGNALS (STEP 4)
@@ -1527,11 +1988,11 @@ export default function NetworkSpatialEnvironment({
 
         let nodeOpacity = 0;
         if (p >= activationThreshold) {
-          const fade = Math.min(1, (p - activationThreshold) / 0.08);
+          const fade = Math.min(1, (p - activationThreshold) / 0.04);
           const pulseRate = isNodeDiscovered && isMemActive
             ? 4.6
             : (2.5 + (hubNodeIds.includes(item.id) ? convergenceIntensity * 3 : 0));
-          const pulse = 0.86 + Math.sin(time * pulseRate + index * 0.85) * (isNodeDiscovered ? 0.22 : 0.14);
+          const pulse = 0.88 + Math.sin(time * pulseRate + index * 0.85) * (isNodeDiscovered ? 0.22 : 0.12);
           nodeOpacity = fade * pulse;
         }
 
@@ -1583,8 +2044,8 @@ export default function NetworkSpatialEnvironment({
           flash3DBurst * 1.0
         );
         const auraScale =
-          CENTRAL_ENTITY_DATA.scale *
-          (7.0 +
+          56 *
+          (6.0 +
             (maxEncounterIntensity + (isCentralSelected ? 0.8 : 0) + convergenceIntensity * 2.5) * 3.5 +
             flash3DBurst * 18.0);
         centralComponents.encounterAura.scale.set(auraScale, auraScale, 1);
@@ -1713,7 +2174,7 @@ export default function NetworkSpatialEnvironment({
           posAttr.setXYZ(1, srcPos.x, srcPos.y, srcPos.z);
           posAttr.needsUpdate = true;
         } else {
-          const drawSpan = 0.07;
+          const drawSpan = 0.035;
           const progressAlong = isPathRelated
             ? 1.0
             : Math.min(1, (p - activationThreshold) / drawSpan);
@@ -1726,9 +2187,9 @@ export default function NetworkSpatialEnvironment({
           posAttr.setXYZ(1, curX, curY, curZ);
           posAttr.needsUpdate = true;
 
-          const targetOpacity = pathObj.tier === 'backbone' ? 0.72 : 0.42;
+          const targetOpacity = pathObj.tier === 'backbone' ? 0.85 : 0.65;
           let calculatedOpacity = isPathRelated
-            ? 0.95
+            ? 0.98
             : progressAlong * (targetOpacity + pathEncounter * 0.45);
 
           if (isQuieting && !isDiscoveredEndpoint && !isPathRelated) {
@@ -1754,7 +2215,7 @@ export default function NetworkSpatialEnvironment({
       });
 
       pulseGeometry.attributes.position.needsUpdate = true;
-      pulseMaterial.opacity = p >= 0.2 ? Math.min(1, (p - 0.2) / 0.14) * 0.9 : 0;
+      pulseMaterial.opacity = p >= 0.03 ? Math.min(1, (p - 0.03) / 0.08) * 0.95 : 0;
 
       // ----------------------------------------------------------------------
       // F. FLOATING DATA STRUCTURES
@@ -1940,60 +2401,98 @@ export default function NetworkSpatialEnvironment({
       window.removeEventListener('touchend', onPointerUp);
       window.removeEventListener('resize', onResize);
 
+      const safeDisposeMaterial = (mat: any) => {
+        if (!mat) return;
+        if (Array.isArray(mat)) {
+          mat.forEach((m) => {
+            if (m && typeof m.dispose === 'function') m.dispose();
+          });
+        } else if (typeof mat.dispose === 'function') {
+          mat.dispose();
+        }
+      };
+
+      const safeDisposeGeometry = (geo: any) => {
+        if (geo && typeof geo.dispose === 'function') {
+          geo.dispose();
+        }
+      };
+
       Object.values(centralComponents).forEach((obj: any) => {
-        if (obj) {
-          if (obj.geometry) obj.geometry.dispose();
-          if (obj.material) obj.material.dispose();
+        if (!obj) return;
+        if (Array.isArray(obj)) {
+          obj.forEach((item: any) => {
+            if (item) {
+              safeDisposeGeometry(item.geometry);
+              safeDisposeMaterial(item.material || item);
+            }
+          });
+        } else {
+          safeDisposeGeometry(obj.geometry);
+          safeDisposeMaterial(obj.material);
         }
       });
 
       nodeMeshes.forEach((n) => {
         n.group.traverse((child) => {
-          if ((child as any).geometry) (child as any).geometry.dispose();
-          if ((child as any).material) (child as any).material.dispose();
+          safeDisposeGeometry((child as any).geometry);
+          safeDisposeMaterial((child as any).material);
         });
       });
 
       waveSystems.forEach((w) => {
-        w.particles.geometry.dispose();
-        (w.particles.material as THREE.Material).dispose();
-        w.pathLine.geometry.dispose();
-        (w.pathLine.material as THREE.Material).dispose();
+        safeDisposeGeometry(w.particles.geometry);
+        safeDisposeMaterial(w.particles.material);
+        safeDisposeGeometry(w.pathLine.geometry);
+        safeDisposeMaterial(w.pathLine.material);
       });
 
       pathwayObjects.forEach((p) => {
-        p.geometry.dispose();
-        p.material.dispose();
+        safeDisposeGeometry(p.geometry);
+        safeDisposeMaterial(p.material);
       });
 
-      pulseGeometry.dispose();
-      pulseMaterial.dispose();
+      safeDisposeGeometry(pulseGeometry);
+      safeDisposeMaterial(pulseMaterial);
 
       structureMeshes.forEach((s) => {
         s.mesh.traverse((child) => {
-          if ((child as any).geometry) (child as any).geometry.dispose();
-          if ((child as any).material) (child as any).material.dispose();
+          safeDisposeGeometry((child as any).geometry);
+          safeDisposeMaterial((child as any).material);
         });
       });
 
       dataBlockMeshes.forEach((b) => {
-        b.mesh.geometry.dispose();
-        (b.mesh.material as THREE.Material).dispose();
+        safeDisposeGeometry(b.mesh.geometry);
+        safeDisposeMaterial(b.mesh.material);
       });
 
       convergenceFilaments.forEach((f) => {
-        f.geometry.dispose();
-        f.material.dispose();
+        safeDisposeGeometry(f.geometry);
+        safeDisposeMaterial(f.material);
       });
-      convPulseGeo.dispose();
-      convPulseMat.dispose();
+      safeDisposeGeometry(convPulseGeo);
+      safeDisposeMaterial(convPulseMat);
 
-      discoveryLineGeo.dispose();
-      discoveryLineMat.dispose();
-      discPulseGeo.dispose();
-      discPulseMat.dispose();
+      safeDisposeGeometry(discoveryLineGeo);
+      safeDisposeMaterial(discoveryLineMat);
+      safeDisposeGeometry(discPulseGeo);
+      safeDisposeMaterial(discPulseMat);
 
-      glowTexture.dispose();
+      allNodeConduits.forEach((c) => {
+        safeDisposeGeometry(c.geometry);
+        safeDisposeMaterial(c.material);
+      });
+      safeDisposeGeometry(conduitPulseGeo);
+      safeDisposeMaterial(conduitPulseMat);
+
+      if (centralComponents.sphereTexture && typeof centralComponents.sphereTexture.dispose === 'function') {
+        centralComponents.sphereTexture.dispose();
+      }
+
+      if (glowTexture && typeof glowTexture.dispose === 'function') {
+        glowTexture.dispose();
+      }
 
       if (renderer.domElement && container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);

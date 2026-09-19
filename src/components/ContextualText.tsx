@@ -87,12 +87,14 @@ export default function ContextualText({ progress }: ContextualTextProps) {
   return (
     <div
       id="cinematic-contextual-overlay"
+      data-about-id="contextual-narrative"
+      title="Tap to view Cognitive Stream Telemetry"
       aria-live="polite"
       style={{
         opacity: easedOpacity,
         transform: `translate3d(0, ${translateY}px, 0)`,
       }}
-      className="fixed bottom-7 sm:bottom-10 left-5 sm:left-10 z-20 pointer-events-none select-none flex flex-col gap-1 transition-transform ease-out will-change-transform"
+      className="fixed bottom-7 sm:bottom-10 left-5 sm:left-10 z-20 pointer-events-auto cursor-pointer select-none flex flex-col gap-1 transition-all ease-out will-change-transform hover:brightness-125"
     >
       {/* Category / Layer Supertitle */}
       <div className="flex items-center gap-2">

@@ -15,7 +15,9 @@ import DeepContextualText from './components/DeepContextualText.tsx';
 import CustomCursor from './components/CustomCursor.tsx';
 import AutoScrollButton from './components/AutoScrollButton.tsx';
 import SectionInfoOverlay from './components/information/SectionInfoOverlay.tsx';
+import UniversalAboutCard from './components/information/UniversalAboutCard.tsx';
 import { SECTION_INFO_REGISTRY } from './data/informationRegistry.ts';
+import { getUniversalAboutInfo, UniversalAboutData } from './data/universalAboutRegistry.ts';
 
 /**
  * Main Cinematic Application Experience
@@ -127,6 +129,47 @@ export default function App() {
 
   // Section Information Layer state
   const [isSectionInfoOpen, setIsSectionInfoOpen] = useState<boolean>(false);
+
+  // Universal About Info state (Global across all elements & objects on the entire website)
+  const [activeAboutData, setActiveAboutData] = useState<UniversalAboutData | null>(null);
+  const [activeAboutAnchor, setActiveAboutAnchor] = useState<{ x: number; y: number } | null>(null);
+
+  // Global click / touch delegate: detects any touched or clicked element with [data-about-id]
+  useEffect(() => {
+    const handleGlobalInteract = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+
+      // Do not re-trigger if clicking inside an active card
+      if (target.closest('#universal-about-modal-card')) {
+        return;
+      }
+
+      const aboutElem = target.closest('[data-about-id]') as HTMLElement | null;
+      if (aboutElem) {
+        const aboutId = aboutElem.getAttribute('data-about-id');
+        if (aboutId) {
+          const info = getUniversalAboutInfo(aboutId);
+          if (info) {
+            let clientX = window.innerWidth / 2;
+            let clientY = window.innerHeight / 2;
+            if ('clientX' in e && typeof e.clientX === 'number') {
+              clientX = e.clientX;
+              clientY = e.clientY;
+            } else if ('touches' in e && e.touches && e.touches[0]) {
+              clientX = e.touches[0].clientX;
+              clientY = e.touches[0].clientY;
+            }
+            setActiveAboutData(info);
+            setActiveAboutAnchor({ x: clientX, y: clientY });
+          }
+        }
+      }
+    };
+
+    window.addEventListener('click', handleGlobalInteract);
+    return () => window.removeEventListener('click', handleGlobalInteract);
+  }, []);
 
   // Navigation Click Handlers
   const handleScrollToTop = () => {
@@ -250,6 +293,15 @@ export default function App() {
         section={SECTION_INFO_REGISTRY[activeSection]}
         onClose={() => setIsSectionInfoOpen(false)}
       />
+
+      {/* Universal About Information Popup (Global for any touched/clicked element on website) */}
+      {activeAboutData && (
+        <UniversalAboutCard
+          data={activeAboutData}
+          anchorPos={activeAboutAnchor}
+          onClose={() => setActiveAboutData(null)}
+        />
+      )}
     </main>
   );
 }

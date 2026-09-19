@@ -1551,10 +1551,6 @@ export default function DeepMathematicalEnvironment({
       const match = checkIntersection(e.clientX, e.clientY);
       if (match) {
         const { object, elementId } = match;
-        // Do not auto-open on cubic model tap to prevent interrupting scroll flow
-        if (elementId === 'tesseract-4d' || object.userData?.isCubicModel) {
-          return;
-        }
 
         const worldPos = new THREE.Vector3();
         object.getWorldPosition(worldPos);
@@ -1623,10 +1619,14 @@ export default function DeepMathematicalEnvironment({
 
       scene.traverse((obj) => {
         if (obj instanceof THREE.Mesh || obj instanceof THREE.LineSegments || obj instanceof THREE.Points) {
-          obj.geometry?.dispose();
+          if (obj.geometry && typeof obj.geometry.dispose === 'function') {
+            obj.geometry.dispose();
+          }
           if (Array.isArray(obj.material)) {
-            obj.material.forEach((m) => m.dispose());
-          } else if (obj.material) {
+            obj.material.forEach((m) => {
+              if (m && typeof m.dispose === 'function') m.dispose();
+            });
+          } else if (obj.material && typeof obj.material.dispose === 'function') {
             obj.material.dispose();
           }
         }

@@ -84,6 +84,8 @@ export default function Navigation({
       <div className="flex items-center gap-2.5 pointer-events-auto">
         <button
           type="button"
+          data-about-id="brand-wordmark"
+          title="Tap for System Architecture Info"
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
           className="group flex items-center gap-2.5 text-left focus:outline-none"
           aria-label="Through The Matrix Home"
@@ -110,6 +112,8 @@ export default function Navigation({
               <button
                 key={item.id}
                 type="button"
+                data-about-id={`nav-${item.id}`}
+                title={`Layer ${item.code}: ${item.label} Info`}
                 onClick={() => handleItemClick(item)}
                 onMouseEnter={() => setHoveredItem(item.id)}
                 onMouseLeave={() => setHoveredItem(null)}

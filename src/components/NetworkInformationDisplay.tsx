@@ -46,6 +46,14 @@ const NetworkInformationDisplay = forwardRef<
   const [decodePhase, setDecodePhase] = useState<'gathering' | 'resolving' | 'revealed'>('gathering');
   const [scrambleText, setScrambleText] = useState('');
 
+  // Scroll fade down tracking: when scrolling down, card fades out and closes automatically
+  const [scrollFadeOpacity, setScrollFadeOpacity] = useState<number>(1);
+  const scrollFadeOpacityRef = useRef<number>(1);
+  const scrollFadeOffsetYRef = useRef<number>(0);
+  const initialScrollYRef = useRef<number | null>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
   // Direct DOM refs for 60fps/120fps sync with Three.js camera/scrolling
   const hoverPinpointRef = useRef<HTMLDivElement | null>(null);
   const selectedPinpointRef = useRef<HTMLDivElement | null>(null);
@@ -54,9 +62,54 @@ const NetworkInformationDisplay = forwardRef<
   const connectorEndDotRef = useRef<SVGCircleElement | null>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
 
+  // Auto-dismiss on scroll: card smoothly fades down over 45px and unmounts, never getting stuck
+  useEffect(() => {
+    if (!selectedInfo) {
+      initialScrollYRef.current = null;
+      scrollFadeOpacityRef.current = 1;
+      scrollFadeOffsetYRef.current = 0;
+      setScrollFadeOpacity(1);
+      return;
+    }
+
+    initialScrollYRef.current = window.scrollY;
+    scrollFadeOpacityRef.current = 1;
+    scrollFadeOffsetYRef.current = 0;
+    setScrollFadeOpacity(1);
+
+    const handleWindowScroll = () => {
+      if (initialScrollYRef.current === null) return;
+      const currentY = window.scrollY;
+      const delta = Math.abs(currentY - initialScrollYRef.current);
+      const fadeDistance = 45;
+
+      if (delta <= 0) {
+        scrollFadeOpacityRef.current = 1;
+        scrollFadeOffsetYRef.current = 0;
+        setScrollFadeOpacity(1);
+      } else if (delta < fadeDistance) {
+        const ratio = 1 - delta / fadeDistance;
+        scrollFadeOpacityRef.current = ratio;
+        scrollFadeOffsetYRef.current = (1 - ratio) * 20;
+        setScrollFadeOpacity(ratio);
+      } else {
+        scrollFadeOpacityRef.current = 0;
+        scrollFadeOffsetYRef.current = 20;
+        setScrollFadeOpacity(0);
+        onCloseRef.current();
+      }
+    };
+
+    window.addEventListener('scroll', handleWindowScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleWindowScroll);
+  }, [selectedInfo?.id]);
+
   // Imperative handle called every frame by Three.js render loop
   useImperativeHandle(ref, () => ({
     updateAnchors: (selected: ScreenAnchor | null, hovered: ScreenAnchor | null) => {
+      const currentOpacity = scrollFadeOpacityRef.current;
+      const currentOffsetY = scrollFadeOffsetYRef.current;
+
       // 1. Update Hover Preview Pinpoint
       if (hoverPinpointRef.current) {
         if (hovered && hovered.visible && !selected) {
@@ -69,8 +122,9 @@ const NetworkInformationDisplay = forwardRef<
 
       // 2. Update Selected Pinpoint, Connector & Card
       if (selectedPinpointRef.current) {
-        if (selected && selected.visible) {
+        if (selected && selected.visible && currentOpacity > 0) {
           selectedPinpointRef.current.style.display = 'block';
+          selectedPinpointRef.current.style.opacity = String(currentOpacity);
           selectedPinpointRef.current.style.transform = `translate3d(${selected.x}px, ${selected.y}px, 0)`;
 
           // Compute Card & Connector coordinates
@@ -106,7 +160,8 @@ const NetworkInformationDisplay = forwardRef<
 
           if (cardRef.current) {
             cardRef.current.style.display = 'block';
-            cardRef.current.style.transform = `translate3d(${cardX}px, ${cardY}px, 0)`;
+            cardRef.current.style.opacity = String(currentOpacity);
+            cardRef.current.style.transform = `translate3d(${cardX}px, ${cardY + currentOffsetY}px, 0)`;
           }
 
           // Connector Line start & end
@@ -120,6 +175,7 @@ const NetworkInformationDisplay = forwardRef<
 
           if (connectorPathRef.current) {
             connectorPathRef.current.style.display = 'block';
+            connectorPathRef.current.style.opacity = String(currentOpacity);
             const midX = startX + (endX - startX) * 0.45;
             connectorPathRef.current.setAttribute(
               'd',
@@ -128,11 +184,13 @@ const NetworkInformationDisplay = forwardRef<
           }
           if (connectorStartDotRef.current) {
             connectorStartDotRef.current.style.display = 'block';
+            connectorStartDotRef.current.style.opacity = String(currentOpacity);
             connectorStartDotRef.current.setAttribute('cx', `${startX}`);
             connectorStartDotRef.current.setAttribute('cy', `${startY}`);
           }
           if (connectorEndDotRef.current) {
             connectorEndDotRef.current.style.display = 'block';
+            connectorEndDotRef.current.style.opacity = String(currentOpacity);
             connectorEndDotRef.current.setAttribute('cx', `${endX}`);
             connectorEndDotRef.current.setAttribute('cy', `${endY}`);
           }
@@ -253,37 +311,47 @@ const NetworkInformationDisplay = forwardRef<
       {/* 4. INFORMATION CARD WITH 0101 DATA DECODE EFFECT                     */}
       {/* -------------------------------------------------------------------- */}
       {selectedInfo && (
-        <div
-          ref={cardRef}
-          id={`network-info-card-${selectedInfo.id}`}
-          style={{ display: 'none' }}
-          className="absolute pointer-events-auto w-[310px] sm:w-[340px] rounded border border-emerald-500/40 bg-black/85 backdrop-blur-md shadow-[0_4px_30px_rgba(0,0,0,0.8),0_0_15px_rgba(34,197,94,0.15)] text-emerald-300 overflow-hidden z-20 will-change-transform"
-        >
-          {/* Header Strip with Decode State & Dismiss Button */}
-          <div className="px-3.5 py-2 border-b border-emerald-500/25 bg-emerald-950/30 flex items-center justify-between">
-            <div className="flex items-center gap-2 text-[10px] tracking-[0.2em] font-semibold text-emerald-400">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span>{selectedInfo.identifier}</span>
-              <span className="text-white/30">•</span>
-              <span className="text-[9px] text-emerald-300/80 uppercase">
-                {decodePhase === 'gathering'
-                  ? 'GATHERING...'
-                  : decodePhase === 'resolving'
-                  ? 'DECODING...'
-                  : 'SYNCHRONIZED'}
-              </span>
-            </div>
+        <>
+          {/* Backdrop: Touching anywhere outside immediately dismisses without blocking */}
+          <div
+            id="network-info-backdrop"
+            onClick={onClose}
+            onTouchStart={onClose}
+            className="fixed inset-0 z-10 pointer-events-auto bg-black/20 backdrop-blur-[1px] cursor-pointer"
+            aria-hidden="true"
+          />
 
-            <button
-              id="network-info-close-btn"
-              type="button"
-              onClick={onClose}
-              className="text-[11px] text-emerald-500/70 hover:text-emerald-300 hover:bg-emerald-900/40 px-1.5 py-0.5 rounded transition-colors cursor-pointer"
-              title="Close inspection"
-            >
-              [×]
-            </button>
-          </div>
+          <div
+            ref={cardRef}
+            id={`network-info-card-${selectedInfo.id}`}
+            style={{ display: 'none' }}
+            className="absolute pointer-events-auto w-[310px] sm:w-[340px] rounded border border-emerald-500/40 bg-black/90 backdrop-blur-md shadow-[0_4px_30px_rgba(0,0,0,0.8),0_0_20px_rgba(34,197,94,0.2)] text-emerald-300 overflow-hidden z-20 will-change-transform animate-matrix-pop-in"
+          >
+            {/* Header Strip with Decode State & Dismiss Button */}
+            <div className="px-3.5 py-2 border-b border-emerald-500/25 bg-emerald-950/30 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-[10px] tracking-[0.2em] font-semibold text-emerald-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span>{selectedInfo.identifier}</span>
+                <span className="text-white/30">•</span>
+                <span className="text-[9px] text-emerald-300/80 uppercase">
+                  {decodePhase === 'gathering'
+                    ? 'GATHERING...'
+                    : decodePhase === 'resolving'
+                    ? 'DECODING...'
+                    : 'SYNCHRONIZED'}
+                </span>
+              </div>
+
+              <button
+                id="network-info-close-btn"
+                type="button"
+                onClick={onClose}
+                className="text-[11px] text-emerald-500/70 hover:text-emerald-300 hover:bg-emerald-900/40 px-1.5 py-0.5 rounded transition-colors cursor-pointer"
+                title="Close (or simply scroll down to dismiss)"
+              >
+                [×]
+              </button>
+            </div>
 
           {/* Card Content Body */}
           <div className="p-3.5 flex flex-col gap-2.5 text-xs">
@@ -340,6 +408,7 @@ const NetworkInformationDisplay = forwardRef<
           <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-emerald-400/80 pointer-events-none" />
           <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-emerald-400/80 pointer-events-none" />
         </div>
+        </>
       )}
     </div>
   );

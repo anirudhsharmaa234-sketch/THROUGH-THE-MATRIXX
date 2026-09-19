@@ -93,7 +93,9 @@ export default function DeepContextualText({ progress }: DeepContextualTextProps
   return (
     <div
       id="deep-contextual-text-overlay"
-      className="fixed bottom-6 sm:bottom-10 left-5 sm:left-10 z-30 pointer-events-none select-none font-matrix-mono transition-opacity duration-150"
+      data-about-id="contextual-narrative"
+      title="Tap to view Cognitive Stream Telemetry"
+      className="fixed bottom-6 sm:bottom-10 left-5 sm:left-10 z-30 pointer-events-auto cursor-pointer select-none font-matrix-mono transition-all duration-150 hover:brightness-125"
       style={{ opacity: clampedOpacity }}
     >
       <div className="flex items-center gap-2 mb-1">

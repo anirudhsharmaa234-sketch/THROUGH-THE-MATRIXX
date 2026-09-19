@@ -288,6 +288,47 @@ export default function InteractiveScanDecodeOverlay({
     }
   }, []);
 
+  // Automatically fade down and dismiss telemetry panel on scroll so it never traps or follows the user
+  const [scrollFadeOpacity, setScrollFadeOpacity] = useState<number>(1);
+  const [scrollFadeOffsetY, setScrollFadeOffsetY] = useState<number>(0);
+  const initialScrollYRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!activeTargetId) {
+      initialScrollYRef.current = null;
+      setScrollFadeOpacity(1);
+      setScrollFadeOffsetY(0);
+      return;
+    }
+
+    initialScrollYRef.current = window.scrollY;
+    setScrollFadeOpacity(1);
+    setScrollFadeOffsetY(0);
+
+    const handleWindowScroll = () => {
+      if (initialScrollYRef.current === null) return;
+      const currentY = window.scrollY;
+      const delta = Math.abs(currentY - initialScrollYRef.current);
+      const fadeDistance = 45;
+
+      if (delta <= 0) {
+        setScrollFadeOpacity(1);
+        setScrollFadeOffsetY(0);
+      } else if (delta < fadeDistance) {
+        const ratio = 1 - delta / fadeDistance;
+        setScrollFadeOpacity(ratio);
+        setScrollFadeOffsetY((1 - ratio) * 20);
+      } else {
+        setScrollFadeOpacity(0);
+        setScrollFadeOffsetY(20);
+        handleElementLeave(activeTargetId);
+      }
+    };
+
+    window.addEventListener('scroll', handleWindowScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleWindowScroll);
+  }, [activeTargetId, handleElementLeave]);
+
   // Handle element hover or touch
   const handleElementHoverOrTouch = useCallback((targetId: string) => {
     setHoveredTargetId(targetId);
@@ -640,14 +681,25 @@ export default function InteractiveScanDecodeOverlay({
         Progressively reveals and renders authentic Matrix system analysis
       */}
       {activeDef && activeAnchorPt && interactionState !== 'idle' && (
-        <div
-          id="matrix-decoded-telemetry-panel"
-          style={{
-            transform: `translate3d(${activePanelPos.x}px, ${activePanelPos.y}px, 0)`,
-            width: `${activePanelPos.width}px`,
-          }}
-          className="absolute top-0 left-0 pointer-events-auto z-30 transition-transform duration-200 will-change-transform font-matrix-mono select-none"
-        >
+        <>
+          {/* Backdrop: Touching outside immediately dismisses */}
+          <div
+            id="scan-telemetry-backdrop"
+            onClick={() => handleElementLeave(activeDef.id)}
+            onTouchStart={() => handleElementLeave(activeDef.id)}
+            className="fixed inset-0 z-20 pointer-events-auto bg-black/20 backdrop-blur-[1px] cursor-pointer"
+            aria-hidden="true"
+          />
+
+          <div
+            id="matrix-decoded-telemetry-panel"
+            style={{
+              transform: `translate3d(${activePanelPos.x}px, ${activePanelPos.y + scrollFadeOffsetY}px, 0)`,
+              width: `${activePanelPos.width}px`,
+              opacity: scrollFadeOpacity,
+            }}
+            className="absolute top-0 left-0 pointer-events-auto z-30 transition-transform duration-75 will-change-transform font-matrix-mono select-none animate-matrix-pop-in"
+          >
           {/* Holographic Window Box */}
           <div className="relative p-3 rounded-[3px] bg-[#020d06]/92 backdrop-blur-[4px] border border-[#4ade80]/60 shadow-[0_0_24px_rgba(74,222,128,0.22)]">
             {/* Technical 4-Corner Accent Brackets */}
@@ -741,6 +793,7 @@ export default function InteractiveScanDecodeOverlay({
             </div>
           </div>
         </div>
+        </>
       )}
 
       {/* 

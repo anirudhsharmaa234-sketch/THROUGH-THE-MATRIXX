@@ -37,11 +37,29 @@ export default function ElementInfoPanel({
     }
   }, [element]);
 
-  // Automatically dismiss panel when user scrolls the page, ensuring scrolling is never blocked or stuck
+  // Automatically dismiss panel when user scrolls the page, with a smooth fade-down transition
+  const [scrollFadeOpacity, setScrollFadeOpacity] = useState<number>(1);
+  const [scrollFadeOffsetY, setScrollFadeOffsetY] = useState<number>(0);
+
   useEffect(() => {
     let initialY = window.scrollY;
+    setScrollFadeOpacity(1);
+    setScrollFadeOffsetY(0);
+
     const handleWindowScroll = () => {
-      if (Math.abs(window.scrollY - initialY) > 12) {
+      const delta = Math.abs(window.scrollY - initialY);
+      const fadeDistance = 45;
+
+      if (delta <= 0) {
+        setScrollFadeOpacity(1);
+        setScrollFadeOffsetY(0);
+      } else if (delta < fadeDistance) {
+        const ratio = 1 - delta / fadeDistance;
+        setScrollFadeOpacity(ratio);
+        setScrollFadeOffsetY((1 - ratio) * 20);
+      } else {
+        setScrollFadeOpacity(0);
+        setScrollFadeOffsetY(20);
         onClose();
       }
     };
@@ -123,6 +141,7 @@ export default function ElementInfoPanel({
       <div
         id="element-info-backdrop"
         onClick={onClose}
+        onTouchStart={onClose}
         onWheel={() => onClose()}
         className="absolute inset-0 w-full h-full pointer-events-auto bg-black/25 backdrop-blur-[1px] cursor-pointer"
         aria-hidden="true"
@@ -134,8 +153,11 @@ export default function ElementInfoPanel({
       */}
       <svg
         id="element-connector-svg"
-        className="absolute inset-0 w-full h-full pointer-events-none"
-        style={{ filter: 'drop-shadow(0 0 5px rgba(74, 222, 128, 0.45))' }}
+        className="absolute inset-0 w-full h-full pointer-events-none transition-opacity duration-75"
+        style={{
+          opacity: scrollFadeOpacity,
+          filter: 'drop-shadow(0 0 5px rgba(74, 222, 128, 0.45))',
+        }}
       >
         <defs>
           <linearGradient id="connectorGradient" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -218,10 +240,11 @@ export default function ElementInfoPanel({
         ref={panelRef}
         id={`element-panel-${element.id}`}
         onClick={(e) => e.stopPropagation()}
-        className="absolute pointer-events-auto w-[calc(100vw-32px)] sm:w-[440px] max-h-[85vh] overflow-y-auto bg-[#020b05]/95 border border-[#22c55e]/50 backdrop-blur-xl p-5 sm:p-6 shadow-[0_0_35px_rgba(34,197,94,0.22)] font-matrix-mono text-neutral-200 transition-all duration-200"
+        className="absolute pointer-events-auto w-[calc(100vw-32px)] sm:w-[440px] max-h-[85vh] overflow-y-auto bg-[#020b05]/95 border border-[#22c55e]/50 backdrop-blur-xl p-5 sm:p-6 shadow-[0_0_35px_rgba(34,197,94,0.22)] font-matrix-mono text-neutral-200 transition-transform duration-75 animate-matrix-pop-in will-change-transform"
         style={{
           left: `${targetPanelX}px`,
-          top: `${targetPanelY}px`,
+          top: `${targetPanelY + scrollFadeOffsetY}px`,
+          opacity: scrollFadeOpacity,
         }}
       >
         {/* Cybernetic Corner Brackets */}
