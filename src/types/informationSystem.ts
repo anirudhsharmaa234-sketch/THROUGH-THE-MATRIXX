@@ -9,7 +9,8 @@ export type ElementType =
   | 'structure'
   | 'neural'
   | 'stream'
-  | 'geometry';
+  | 'geometry'
+  | 'construct';
 
 export interface ElementInfo {
   /** Unique element identifier (e.g., 'schrodinger-dynamics', 'tesseract-4d') */

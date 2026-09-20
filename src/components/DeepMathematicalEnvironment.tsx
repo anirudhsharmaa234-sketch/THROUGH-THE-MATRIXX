@@ -5,6 +5,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { LivingCalculationEngine } from './deep/livingCalculationEngine.ts';
+import { CalculationConstructId } from '../types/livingCalculationTypes.ts';
 
 export interface DeepMathematicalEnvironmentProps {
   scrollProgress: number; // 0.0 to 1.0 (pure scroll-driven, no autoplay)
@@ -12,6 +14,18 @@ export interface DeepMathematicalEnvironmentProps {
   onSelectElement?: (elementId: string, screenPos: { x: number; y: number }) => void;
   onUpdateScreenPos?: (screenPos: { x: number; y: number }) => void;
 }
+
+// Living Calculation Construct ID mapping
+export const CALCULATION_CONSTRUCT_IDS: CalculationConstructId[] = [
+  'sigma-convergence',
+  'nabla-gradient',
+  'lambda-spectral',
+  'integral-accumulation',
+  'pi-metric',
+  'delta-differential',
+  'partial-flux',
+  'infinity-limit',
+];
 
 // Element ID mapping matching ELEMENT_INFO_REGISTRY
 export const FORMULA_ELEMENT_IDS = [
@@ -474,6 +488,7 @@ export default function DeepMathematicalEnvironment({
   const neuralLineSegmentsRef = useRef<THREE.LineSegments | null>(null);
   const neuralNodesPointsRef = useRef<THREE.Points | null>(null);
   const binaryColumnsGroupRef = useRef<THREE.Group | null>(null);
+  const livingCalcEngineRef = useRef<LivingCalculationEngine | null>(null);
 
   // Mouse parallax coordinates
   const mouseRef = useRef<{ x: number; y: number; targetX: number; targetY: number }>({
@@ -533,6 +548,16 @@ export default function DeepMathematicalEnvironment({
     renderer.setClearColor(0x000000, 0);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     container.appendChild(renderer.domElement);
+
+    // -------------------------------------------------------------------------
+    // LAYER 0: Living Calculation Environment (8 Master Constructs & Depth Layers)
+    // -------------------------------------------------------------------------
+    const livingCalcEngine = new LivingCalculationEngine(scene);
+    livingCalcEngineRef.current = livingCalcEngine;
+
+    livingCalcEngine.constructs.forEach((c) => {
+      interactiveObjectsRef.current.push(c.hitCollider);
+    });
 
     // -------------------------------------------------------------------------
     // LAYER 1: 3D Quantum Starfield / Deep Data Points
@@ -1042,6 +1067,9 @@ export default function DeepMathematicalEnvironment({
     const renderLoop = (now: number) => {
       animFrameIdRef.current = requestAnimationFrame(renderLoop);
 
+      const time = now * 0.001;
+      const delta = lastRenderTime > 0 ? Math.min((now - lastRenderTime) * 0.001, 0.1) : 0.016;
+
       // Smooth mouse parallax lerp
       mouseRef.current.x += (mouseRef.current.targetX - mouseRef.current.x) * 0.05;
       mouseRef.current.y += (mouseRef.current.targetY - mouseRef.current.y) * 0.05;
@@ -1330,6 +1358,11 @@ export default function DeepMathematicalEnvironment({
         }
       }
 
+      // 11. Living Calculation Engine Update (Data convergence, dynamic lines, procedural geometry)
+      if (livingCalcEngineRef.current) {
+        livingCalcEngineRef.current.update(delta, time, scrollProgressRef.current);
+      }
+
       // Render scene
       if (rendererRef.current && sceneRef.current && cameraRef.current) {
         rendererRef.current.render(sceneRef.current, cameraRef.current);
@@ -1512,13 +1545,22 @@ export default function DeepMathematicalEnvironment({
       const match = checkIntersection(e.clientX, e.clientY);
       if (match) {
         hoveredElementIdRef.current = match.elementId;
-        if (match.object.userData?.isCubicModel || match.elementId === 'tesseract-4d') {
-          domEl.style.cursor = dragModeRef.current === 'zoom' ? 'ns-resize' : 'grab';
-        } else {
+        if (match.object.userData?.isLivingCalculationConstruct) {
           domEl.style.cursor = 'pointer';
+          livingCalcEngineRef.current?.setHoveredConstruct(
+            match.object.userData.constructId as CalculationConstructId
+          );
+        } else {
+          livingCalcEngineRef.current?.setHoveredConstruct(null);
+          if (match.object.userData?.isCubicModel || match.elementId === 'tesseract-4d') {
+            domEl.style.cursor = dragModeRef.current === 'zoom' ? 'ns-resize' : 'grab';
+          } else {
+            domEl.style.cursor = 'pointer';
+          }
         }
       } else {
         hoveredElementIdRef.current = null;
+        livingCalcEngineRef.current?.setHoveredConstruct(null);
         domEl.style.cursor = 'default';
       }
     };
@@ -1544,13 +1586,20 @@ export default function DeepMathematicalEnvironment({
         return;
       }
 
-      // Handle clicks on other interactive elements (equations, glyphs)
+      // Handle clicks on other interactive elements (equations, glyphs, living calculation constructs)
       const dist = Math.hypot(e.clientX - pointerDownCoord.x, e.clientY - pointerDownCoord.y);
       if (dist > 8) return; // Ignore drags or scrolls
 
       const match = checkIntersection(e.clientX, e.clientY);
       if (match) {
         const { object, elementId } = match;
+
+        // If a living calculation construct was clicked or tapped, trigger its multi-phase calculation sequence
+        if (object.userData?.isLivingCalculationConstruct && object.userData.constructId) {
+          livingCalcEngineRef.current?.triggerCalculation(
+            object.userData.constructId as CalculationConstructId
+          );
+        }
 
         const worldPos = new THREE.Vector3();
         object.getWorldPosition(worldPos);
@@ -1601,6 +1650,10 @@ export default function DeepMathematicalEnvironment({
     return () => {
       if (animFrameIdRef.current) {
         cancelAnimationFrame(animFrameIdRef.current);
+      }
+      if (livingCalcEngineRef.current) {
+        livingCalcEngineRef.current.dispose();
+        livingCalcEngineRef.current = null;
       }
       window.removeEventListener('resize', handleResize);
       domEl.removeEventListener('pointerdown', onPointerDown);

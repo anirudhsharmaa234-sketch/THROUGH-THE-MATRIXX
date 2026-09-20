@@ -171,6 +171,153 @@ export const UNIVERSAL_ABOUT_REGISTRY: Record<string, UniversalAboutData> = {
     ],
     accentColor: '#86efac',
   },
+
+  // ==========================================================================
+  // LIVING CALCULATION CONSTRUCTS
+  // ==========================================================================
+  'sigma-convergence': {
+    id: 'sigma-convergence',
+    code: 'CALC // Σ-CONVERGE',
+    title: 'DISCRETE SUMMATION CONVERGENCE (∑)',
+    category: 'SERIES CONVERGENCE // LATTICE SYNTHESIZER',
+    status: 'GENERATIVE // LIVE CALCULATION',
+    summary: 'The Sigma operator pulls scattered numerical and coordinate tokens toward its central calculation axis, crystallizing into an articulated geometric lattice.',
+    description:
+      'Rather than serving as decorative symbols, equations in DEEP are living generative mechanisms. When Sigma evaluates, nearby scattered data points converge, forming dynamic relationship lasers that assemble a structured polygonal lattice.',
+    metrics: [
+      { label: 'OPERATOR', value: 'DISCRETE SUMMATION (∑)' },
+      { label: 'EQUATION', value: '∑ k⁻ˢ = ζ(s)' },
+      { label: 'RESULT', value: 'POLYGONAL LATTICE' },
+      { label: 'STATE', value: 'DYNAMIC CONVERGENCE' },
+    ],
+    accentColor: '#4ade80',
+  },
+
+  'nabla-gradient': {
+    id: 'nabla-gradient',
+    code: 'CALC // ∇-GRADIENT',
+    title: 'GRADIENT VECTOR FIELD (∇)',
+    category: 'VECTOR FIELD // MANIFOLD CURVATURE',
+    status: 'GENERATIVE // LIVE CALCULATION',
+    summary: 'Computes spatial gradients, flexing curved coordinate manifolds and guiding floating data particles along potential vectors.',
+    description:
+      'The Nabla differential operator computes multidimensional gradients. As calculation executes, directional vectors erupt along the local field, flexing the contour ribs of a parabolic geometric manifold.',
+    metrics: [
+      { label: 'OPERATOR', value: 'NABLA GRADIENT (∇)' },
+      { label: 'EQUATION', value: '∇²Φ = 0 • ∇×A = B' },
+      { label: 'RESULT', value: 'CURVED MANIFOLD' },
+      { label: 'STATE', value: 'VECTOR DIRECTED' },
+    ],
+    accentColor: '#22c55e',
+  },
+
+  'lambda-spectral': {
+    id: 'lambda-spectral',
+    code: 'CALC // λ-SPECTRAL',
+    title: 'SPECTRAL HARMONIC MODULATOR (λ)',
+    category: 'SPECTRAL OPERATOR // HARMONIC WAVE',
+    status: 'GENERATIVE // LIVE CALCULATION',
+    summary: 'Determines characteristic spatial wavelengths, stimulating data points to oscillate in harmonic unison along multi-track ribbons.',
+    description:
+      'The Lambda eigenvalue operator governs spectral frequencies. Evaluating it drives sinusoidal oscillations across geometric ribbons, illustrating how continuous wave surfaces are generated from discrete eigenvalue calculations.',
+    metrics: [
+      { label: 'OPERATOR', value: 'EIGENVALUE / WAVELENGTH (λ)' },
+      { label: 'EQUATION', value: 'λ f(x) = Ĥ f(x)' },
+      { label: 'RESULT', value: 'HARMONIC WAVE RIBBON' },
+      { label: 'STATE', value: 'RESONANT FREQUENCY' },
+    ],
+    accentColor: '#86efac',
+  },
+
+  'integral-accumulation': {
+    id: 'integral-accumulation',
+    code: 'CALC // ∫-INTEGRAL',
+    title: 'CONTINUOUS ACCUMULATION MEASURE (∫)',
+    category: 'STOKES MEASURE // VOLUMETRIC PRISM',
+    status: 'GENERATIVE // LIVE CALCULATION',
+    summary: 'Integrates infinitesimal area slices into volumetric spatial enclosures.',
+    description:
+      'The Integral operator accumulates scattered differential data paths into continuous geometric forms. As the calculation executes, stratified planar slices illuminate in sequence along the vertical axis, forming a complete volumetric prism.',
+    metrics: [
+      { label: 'OPERATOR', value: 'DEFINITE INTEGRAL (∫)' },
+      { label: 'EQUATION', value: '∫_Ω ω = ∮_∂Ω dω' },
+      { label: 'RESULT', value: 'STRATIFIED PRISM' },
+      { label: 'STATE', value: 'VOLUMETRIC ACCUMULATION' },
+    ],
+    accentColor: '#4ade80',
+  },
+
+  'pi-metric': {
+    id: 'pi-metric',
+    code: 'CALC // π-METRIC',
+    title: 'CIRCULAR METRIC & GEODESIC RESONATOR (π)',
+    category: 'METRIC INVARIANCE // GEODESIC FRAMEWORK',
+    status: 'GENERATIVE // LIVE CALCULATION',
+    summary: 'Anchors circular topology invariance and radial metric boundaries across coordinate space.',
+    description:
+      'The Pi construct maintains rotational metric consistency. Evaluation pulses three concentric geodesic rings, expanding and contracting radial spoke needles in harmonic equilibrium.',
+    metrics: [
+      { label: 'OPERATOR', value: 'RADIAL INVARIANCE (π)' },
+      { label: 'EQUATION', value: 'e^(iπ) + 1 = 0' },
+      { label: 'RESULT', value: 'GEODESIC RINGS' },
+      { label: 'STATE', value: 'RADIAL HARMONY' },
+    ],
+    accentColor: '#22c55e',
+  },
+
+  'delta-differential': {
+    id: 'delta-differential',
+    code: 'CALC // Δ-DELTA',
+    title: 'DIFFERENTIAL COORDINATE SHIFTER (Δ)',
+    category: 'DIFFERENTIAL SHIFT // COORDINATE CALIBRATION',
+    status: 'GENERATIVE // LIVE CALCULATION',
+    summary: 'Calculates finite increments and uncertainties, perturbing and recalibrating floating coordinate cube matrices.',
+    description:
+      'The Delta differential operator calculates finite increments and uncertainties. Activating Delta applies a dynamic spatial perturbation to a floating 3D coordinate cube matrix, shifting its vertices before recalibrating to baseline.',
+    metrics: [
+      { label: 'OPERATOR', value: 'FINITE DIFFERENCE (Δ)' },
+      { label: 'EQUATION', value: 'Δx → 0 • ΔE Δt ≥ ħ/2' },
+      { label: 'RESULT', value: 'PERTURBED CUBE MATRIX' },
+      { label: 'STATE', value: 'UNCERTAINTY CALIBRATION' },
+    ],
+    accentColor: '#86efac',
+  },
+
+  'partial-flux': {
+    id: 'partial-flux',
+    code: 'CALC // ∂-FLUX',
+    title: 'PARTIAL FLUX & CONTINUITY GATE (∂)',
+    category: 'FLUX DIVERGENCE // POLYHEDRAL CAGE',
+    status: 'GENERATIVE // LIVE CALCULATION',
+    summary: 'Monitors conserved informational flux, filtering data tokens through translucent dodecahedral facets.',
+    description:
+      'The Partial derivative operator monitors conserved informational flux. When triggered, translucent dodecahedral facets shimmer as data tokens pass through their wireframe boundaries into a central core singularity.',
+    metrics: [
+      { label: 'OPERATOR', value: 'PARTIAL DERIVATIVE (∂)' },
+      { label: 'EQUATION', value: '∂ρ/∂t + ∇·j = 0' },
+      { label: 'RESULT', value: 'DODECAHEDRAL CAGE' },
+      { label: 'STATE', value: 'FLUX CONSERVATION' },
+    ],
+    accentColor: '#4ade80',
+  },
+
+  'infinity-limit': {
+    id: 'infinity-limit',
+    code: 'CALC // ∞-LIMIT',
+    title: 'ASYMPTOTIC LIMIT & INFINITE LOOP (∞)',
+    category: 'ASYMPTOTIC CONVERGENCE // RECURSIVE LOOP',
+    status: 'GENERATIVE // LIVE CALCULATION',
+    summary: 'Calculates infinite recursion limits, accelerating data tokens along continuous Bernoulli lemniscate curves.',
+    description:
+      'The Infinity operator governs asymptotic convergence. Activation accelerates data tokens along the continuous curvature of a Bernoulli lemniscate loop, simulating infinite convergence within finite computational bounds.',
+    metrics: [
+      { label: 'OPERATOR', value: 'ASYMPTOTIC LIMIT (∞)' },
+      { label: 'EQUATION', value: 'lim (1 + 1/n)^n = e' },
+      { label: 'RESULT', value: 'LEMNISCATE DUAL LOOP' },
+      { label: 'STATE', value: 'ASYMPTOTIC RECURSION' },
+    ],
+    accentColor: '#22c55e',
+  },
 };
 
 export function getUniversalAboutInfo(id: string): UniversalAboutData | null {

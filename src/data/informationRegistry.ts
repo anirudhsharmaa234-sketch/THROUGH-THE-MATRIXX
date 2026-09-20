@@ -404,6 +404,137 @@ export const ELEMENT_INFO_REGISTRY: Record<string, ElementInfo> = {
     roleInSection:
       'Showcases fundamental operator primitives and symbolic notation that construct the algorithmic continuum.',
   },
+
+  // ---------------------------------------------------------------------------
+  // LIVING CALCULATION CONSTRUCTS (DATA -> CALCULATION -> GEOMETRY)
+  // ---------------------------------------------------------------------------
+  'sigma-convergence': {
+    id: 'sigma-convergence',
+    name: 'DISCRETE SUMMATION CONVERGENCE',
+    type: 'construct',
+    category: 'SERIES CONVERGENCE // LATTICE GENERATOR',
+    formulaOrSymbol: '∑_{k=1}^∞ k⁻ˢ = ζ(s)',
+    meaning:
+      'Convergence of infinite discrete data points into a stable, self-supporting mathematical lattice.',
+    description:
+      'The Sigma operator pulls scattered numerical and coordinate tokens toward its central calculation axis. As the calculation occurs, adjacent data points converge, establishing laser relationship lines that crystallize into an articulated geometric lattice.',
+    roleInDeep:
+      'Demonstrates that equations are generative mechanisms: the summation does not merely describe numbers, it physically assembles spatial geometry from loose data.',
+    roleInSection:
+      'Acts as a primary structural aggregator, synthesizing coherent polygon frameworks from dispersed informational fragments.',
+  },
+
+  'nabla-gradient': {
+    id: 'nabla-gradient',
+    name: 'GRADIENT VECTOR FIELD',
+    type: 'construct',
+    category: 'GRADIENT OPERATOR // MANIFOLD CURVATURE',
+    formulaOrSymbol: '∇²Φ = 0 • ∇×A = B',
+    meaning:
+      'Directs surrounding particles along an invisible potential gradient, flexing nearby curved coordinate manifolds.',
+    description:
+      'The Nabla differential operator computes spatial gradients. When activated, directional vectors erupt along the local field, guiding floating data particles along the curved contour ribs of a parabolic geometric manifold.',
+    roleInDeep:
+      'Governs field orientation and vector potential. It transforms scalar data distributions into directed spatial pathways.',
+    roleInSection:
+      'Establishes directional flow and manifold curvature across the midground calculation zone.',
+  },
+
+  'lambda-spectral': {
+    id: 'lambda-spectral',
+    name: 'SPECTRAL HARMONIC MODULATOR',
+    type: 'construct',
+    category: 'SPECTRAL OPERATOR // HARMONIC WAVE',
+    formulaOrSymbol: 'λ f(x) = Ĥ f(x) • λν = c',
+    meaning:
+      'Modulates the spatial wavelength and resonant frequency of adjacent geometric ribbon structures.',
+    description:
+      'The Lambda eigenvalue operator determines characteristic wavelengths. Activating it stimulates local data points to oscillate in harmonic unison, driving sinusoidal oscillations across multi-track geometric ribbons.',
+    roleInDeep:
+      'Ensures harmonic resonance between discrete computational pulses and continuous geometric wave surfaces.',
+    roleInSection:
+      'Controls periodic oscillation and wave-state geometry throughout the foreground observation layer.',
+  },
+
+  'integral-accumulation': {
+    id: 'integral-accumulation',
+    name: 'CONTINUOUS ACCUMULATION MEASURE',
+    type: 'construct',
+    category: 'CONTINUOUS ACCUMULATION // STOKES MEASURE',
+    formulaOrSymbol: '∫_Ω ω = ∮_∂Ω dω • lim Δx→0',
+    meaning:
+      'Integrates infinitesimal area slices into volumetric spatial enclosures.',
+    description:
+      'The Integral operator accumulates scattered differential data paths into continuous geometric forms. As the calculation executes, stratified planar slices illuminate in sequence along the vertical axis, forming a complete volumetric prism.',
+    roleInDeep:
+      'Bridges discrete bits and continuous geometry, illustrating how continuous physical space is synthesized from infinitesimal calculations.',
+    roleInSection:
+      'Accumulates planar data slices into stable 3D geometric volumes.',
+  },
+
+  'pi-metric': {
+    id: 'pi-metric',
+    name: 'CIRCULAR METRIC & GEODESIC RESONATOR',
+    type: 'construct',
+    category: 'METRIC INVARIANCE // GEODESIC FRAMEWORK',
+    formulaOrSymbol: 'e^(iπ) + 1 = 0 • ∮ dz/z = 2πi',
+    meaning:
+      'Defines circular topology invariance and radial metric boundaries across coordinate space.',
+    description:
+      'The Pi construct anchors spatial curvature and rotational symmetry. Interacting with Pi breathes radial pulsation into three concentric geodesic rings, expanding and contracting radial spoke needles in harmonic equilibrium.',
+    roleInDeep:
+      'Maintains rotational metric consistency across non-Euclidean coordinates.',
+    roleInSection:
+      'Generates circular geodesic frameworks and radial coordinate benchmarks.',
+  },
+
+  'delta-differential': {
+    id: 'delta-differential',
+    name: 'DIFFERENTIAL COORDINATE SHIFTER',
+    type: 'construct',
+    category: 'DIFFERENTIAL SHIFT // COORDINATE CALIBRATION',
+    formulaOrSymbol: 'Δx → 0 • ΔE Δt ≥ ħ/2',
+    meaning:
+      'Applies micro-coordinate perturbations and recalibrates local spatial frameworks.',
+    description:
+      'The Delta differential operator calculates finite increments and uncertainties. Activating Delta applies a dynamic spatial perturbation to a floating 3D coordinate cube matrix, shifting its vertices before recalibrating to baseline.',
+    roleInDeep:
+      'Illustrates coordinate recalculation and uncertainty calibration in real time.',
+    roleInSection:
+      'Shifts and stabilizes deep coordinate frameworks in the background depth field.',
+  },
+
+  'partial-flux': {
+    id: 'partial-flux',
+    name: 'PARTIAL FLUX & CONTINUITY GATE',
+    type: 'construct',
+    category: 'FLUX DIVERGENCE // POLYHEDRAL CAGE',
+    formulaOrSymbol: '∂ρ/∂t + ∇·j = 0 • ∂_μ F^μν',
+    meaning:
+      'Manages conservation of information flux through translucent polyhedral boundaries.',
+    description:
+      'The Partial derivative operator monitors conserved informational flux. When triggered, translucent dodecahedral facets shimmer as data tokens pass through their wireframe boundaries into a central core singularity.',
+    roleInDeep:
+      'Governs informational continuity and boundaries between adjacent spatial sectors.',
+    roleInSection:
+      'Filters and routes information flux through polyhedral geometric membranes.',
+  },
+
+  'infinity-limit': {
+    id: 'infinity-limit',
+    name: 'ASYMPTOTIC LIMIT & INFINITE LOOP',
+    type: 'construct',
+    category: 'ASYMPTOTIC CONVERGENCE // RECURSIVE LOOP',
+    formulaOrSymbol: 'lim_{n→∞} (1 + 1/n)^n = e • ∀ε > 0',
+    meaning:
+      'Calculates infinite recursion limits and guides continuous data flow along asymptotic paths.',
+    description:
+      'The Infinity operator governs asymptotic convergence. Activation accelerates data tokens along the continuous curvature of a Bernoulli lemniscate loop, simulating infinite convergence within finite computational bounds.',
+    roleInDeep:
+      'Demonstrates boundary conditions and continuous closed-loop evaluation in the deepest substrate.',
+    roleInSection:
+      'Anchors the infinite depth horizon with continuous asymptotic data flow.',
+  },
 };
 
 /**

@@ -869,6 +869,7 @@ export class LivingCalculationEngine {
       hitCollider.userData = {
         isLivingCalculationConstruct: true,
         constructId: cfg.id,
+        elementId: cfg.id,
         title: `${cfg.symbol} // ${cfg.category}`,
       };
       constructGroup.add(hitCollider);
