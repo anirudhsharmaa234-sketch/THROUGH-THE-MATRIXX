@@ -150,7 +150,7 @@ export default function Section2DeepSequence({
       <div
         id="section2-deep-embedded-stage"
         className={`absolute inset-0 w-full h-full select-none z-20 ${
-          opacity > 0.35 && effectiveProgress < 0.94 ? 'pointer-events-auto' : 'pointer-events-none'
+          opacity > 0.35 && effectiveProgress < 0.965 ? 'pointer-events-auto' : 'pointer-events-none'
         }`}
         style={{
           opacity,

@@ -24,13 +24,13 @@ interface DeepEndFlashTransitionProps {
  * Reversible upon scrolling up: seamlessly unwinds from black back through the white flash.
  */
 
-// Timing milestones in Layer 2 scroll progress
-const TRANSITION_START = 0.910;  // Pre-flash quantum surge begins
-const FLASH_BUILD = 0.942;       // White flash ignites rapidly
-const FLASH_PEAK = 0.960;        // 100% Pure intense white flash
-const FLASH_DECAY = 0.978;       // Flash decays back into the darkness
-const BLACK_START = 0.958;       // Complete black curtain begins taking over
-const BLACK_FULL = 0.986;        // Complete 100% solid pitch black void
+// Timing milestones in Layer 2 scroll progress (Step 5 Critical State Solution Release)
+const TRANSITION_START = 0.978;  // Critical state solution energy surge begins
+const FLASH_BUILD = 0.984;       // Emerald-white photonic pulse ignites
+const FLASH_PEAK = 0.989;        // Peak harmonic energy release
+const FLASH_DECAY = 0.996;       // Smooth dissipation into Network conduit propagation
+const BLACK_START = 0.995;       // Ambient transition handoff toward Network opening
+const BLACK_FULL = 1.000;        // Seamless threshold matching Section 3 Network start
 
 export default function DeepEndFlashTransition({ progress }: DeepEndFlashTransitionProps) {
   // Pre-flash convergence glow
@@ -40,26 +40,24 @@ export default function DeepEndFlashTransition({ progress }: DeepEndFlashTransit
     return Math.pow(t, 2.0);
   }, [progress]);
 
-  // Intense White Flash Calculation
+  // Controlled Emerald-White Harmonic Flash Calculation (brief, translucent, non-blinding)
   const flashIntensity = useMemo(() => {
     if (progress < FLASH_BUILD || progress > FLASH_DECAY) return 0;
     if (progress <= FLASH_PEAK) {
-      // Searing ramp up to 100% pure white at FLASH_PEAK
       const t = (progress - FLASH_BUILD) / (FLASH_PEAK - FLASH_BUILD);
-      return Math.pow(t, 2.4);
+      return Math.pow(t, 2.0) * 0.75; // Kept at max 0.75 to never wash out to pure blank screen
     } else {
-      // Rapid collapse from white flash
       const t = (progress - FLASH_PEAK) / (FLASH_DECAY - FLASH_PEAK);
-      return Math.pow(1 - t, 2.0);
+      return Math.pow(1 - t, 2.0) * 0.75;
     }
   }, [progress]);
 
-  // Complete Black Void Transition Calculation
+  // Ambient Void Bridge Calculation (only at the very edge 0.995 - 1.000)
   const blackVoidOpacity = useMemo(() => {
     if (progress < BLACK_START) return 0;
     if (progress >= BLACK_FULL) return 1.0;
     const t = (progress - BLACK_START) / (BLACK_FULL - BLACK_START);
-    return Math.pow(t, 1.25);
+    return Math.pow(t, 1.2);
   }, [progress]);
 
   // If outside transition range, render nothing
@@ -95,18 +93,18 @@ export default function DeepEndFlashTransition({ progress }: DeepEndFlashTransit
       )}
 
       {/* 
-        2. Singularity Telemetry Pulse before Flash Eruption
+        2. Solution Critical State Pulse before Photonic Release
       */}
       {isPreFlashActive && progress < FLASH_BUILD && (
         <div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-1 font-matrix-mono text-center transition-opacity duration-75"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-1 font-matrix-mono text-center transition-opacity duration-75 pointer-events-none"
           style={{ opacity: preFlashIntensity * 0.9 }}
         >
           <span className="text-[10px] sm:text-xs tracking-[0.35em] text-[#86efac] uppercase font-bold drop-shadow-[0_0_10px_rgba(74,222,128,0.9)]">
-            [ SINGULARITY COLLAPSE ]
+            [ SOLUTION CRITICAL STATE ]
           </span>
           <span className="text-[8px] sm:text-[9px] tracking-[0.25em] text-white/80 uppercase">
-            MASS METRIC DEVIATION &gt; MAXIMUM
+            NETWORK TOPOLOGY RADIATING // 8 CONDUITS ACTIVE
           </span>
         </div>
       )}

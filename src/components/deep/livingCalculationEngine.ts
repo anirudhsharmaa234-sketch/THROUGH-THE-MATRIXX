@@ -10,6 +10,10 @@ import {
   DataParticle,
   CalculationConstructId,
 } from '../../types/livingCalculationTypes.ts';
+import { DimensionalFoldEngine } from './dimensionalFoldEngine.ts';
+import { RecursiveDeepEngine } from './recursiveDeepEngine.ts';
+import { PhysicalMaterializationEngine } from './physicalMaterializationEngine.ts';
+import { ImpossibleSolutionEngine } from './impossibleSolutionEngine.ts';
 
 // 8 Master Calculation Constructs representing living mathematics controlling the environment
 export const CALCULATION_CONSTRUCT_CONFIGS: CalculationConstructConfig[] = [
@@ -1028,26 +1032,59 @@ export class LivingCalculationEngine {
   /**
    * Updates the Living Calculation Environment on every animation frame
    */
-  public update(delta: number, time: number, scrollProgress: number) {
+  public update(
+    delta: number,
+    time: number,
+    scrollProgress: number,
+    foldEngine?: DimensionalFoldEngine,
+    recursiveDeepEngine?: RecursiveDeepEngine,
+    materializationEngine?: PhysicalMaterializationEngine,
+    impossibleEngine?: ImpossibleSolutionEngine
+  ) {
     // 1. Overall Environmental Visibility according to scroll progress
     // Seamlessly matches DEEP Section 2 progression:
-    // Starts emerging at p = 0.08, fully established by p = 0.30 - 0.88, smoothly exits at 0.90
+    // Starts emerging at p = 0.08, fully established by p = 0.30 - 0.88, smoothly exits at 0.96
     let envAlpha = 0;
     if (scrollProgress >= 0.08 && scrollProgress < 0.28) {
       envAlpha = (scrollProgress - 0.08) / 0.20;
-    } else if (scrollProgress >= 0.28 && scrollProgress <= 0.88) {
+    } else if (scrollProgress >= 0.28 && scrollProgress <= 0.92) {
       envAlpha = 1.0;
-    } else if (scrollProgress > 0.88) {
-      envAlpha = Math.max(0, 1 - (scrollProgress - 0.88) / 0.08);
+    } else if (scrollProgress > 0.92) {
+      // Extended gracefully through Step 5 Impossible Solution sequence
+      envAlpha = Math.max(0, 1 - (scrollProgress - 0.96) / 0.035);
     }
+
+    // Step 5: Impossible Solution Convergence & Stabilization
+    const impMetrics = impossibleEngine?.currentMetrics;
+    const impConvergence = impMetrics?.convergenceFactor ?? 0;
+    const impStability = impMetrics?.calculationStability ?? 0;
+
+    // Step 4: Physical Materialization Environmental Reaction
+    const matGravity = materializationEngine
+      ? materializationEngine.getGravitationalCenter()
+      : { position: new THREE.Vector3(0, 0, -480), strength: 0 };
+
+    // Recursive Deep Subtle Invitation Factors:
+    // When approaching RECURSIVE_CORE_01:
+    // 1. Surrounding activity becomes slightly quieter
+    // 2. Nearby data pathways begin orienting toward it
+    // 3. Equations subtly synchronize
+    const isRecursiveInvitation =
+      recursiveDeepEngine && recursiveDeepEngine.currentMetrics.invitationFactor > 0;
+    const invitationFactor = isRecursiveInvitation
+      ? recursiveDeepEngine.currentMetrics.invitationFactor
+      : 0;
+    // When calculation halts into equilibrium, ambient turbulence completely drops to 0
+    const quietMultiplier = (1.0 - invitationFactor * 0.65) * (1.0 - impStability * 0.92);
 
     // Update Foreground Crossing Particles
     if (this.cameraCrossingParticles) {
       const posAttr = this.cameraCrossingParticles.geometry.attributes.position as THREE.BufferAttribute;
       const arr = posAttr.array as Float32Array;
+      const driftSpeed = 0.6 * (1.0 - impStability * 0.88);
       for (let i = 0; i < arr.length; i += 3) {
-        arr[i + 1] += Math.sin(time * 0.4 + i) * 0.15;
-        arr[i + 2] -= 0.6; // Drift toward camera
+        arr[i + 1] += Math.sin(time * 0.4 + i) * 0.15 * (1.0 - impStability * 0.9);
+        arr[i + 2] -= driftSpeed; // Drift toward camera (slows down into answered equilibrium)
         if (arr[i + 2] < -200) {
           arr[i + 2] = 550;
         }
@@ -1075,6 +1112,18 @@ export class LivingCalculationEngine {
     // 2. Process each of the 8 Living Calculation Constructs
     this.constructs.forEach((c) => {
       const { state, config, dataParticles, dataPointsGeo, connectingLinesGeo, geometryMesh } = c;
+
+      // Synchronize construct group position and rotation with Dimensional Fold when active
+      if (foldEngine && scrollProgress >= 0.60) {
+        const transformedAnchor = foldEngine.transformPosition(config.anchorPosition, scrollProgress, time);
+        c.group.position.copy(transformedAnchor);
+        const foldRot = foldEngine.getFoldRotation(config.anchorPosition, scrollProgress);
+        c.group.rotation.y = foldRot.y;
+        c.group.rotation.z = foldRot.z;
+      } else {
+        c.group.position.copy(config.anchorPosition);
+        c.group.rotation.set(0, 0, 0);
+      }
 
       // Smooth lerping of hover intensity
       const targetHover = state.isHovered ? 1.0 : 0.0;
@@ -1147,8 +1196,12 @@ export class LivingCalculationEngine {
       const finalSymbolAlpha = envAlpha * tierAlpha * (0.8 + activeGlow * 0.2);
       (c.symbolMesh.material as THREE.MeshBasicMaterial).opacity = finalSymbolAlpha;
 
-      // Subtle breath scale on symbol
-      const breathScale = 1.0 + Math.sin(time * 1.5 + config.anchorPosition.x) * 0.02 + activeGlow * 0.06;
+      // Subtle breath scale on symbol (Equations subtly synchronize when near recursive core)
+      const syncPhase =
+        invitationFactor > 0.1
+          ? Math.sin(time * 2.5) * (1 - invitationFactor) + Math.sin(time * 2.0) * invitationFactor
+          : Math.sin(time * 1.5 + config.anchorPosition.x);
+      const breathScale = 1.0 + syncPhase * 0.02 * quietMultiplier + activeGlow * 0.06;
       c.symbolMesh.scale.set(breathScale, breathScale, breathScale);
 
       // -----------------------------------------------------------------------
@@ -1162,17 +1215,37 @@ export class LivingCalculationEngine {
       let lineIndex = 0;
 
       dataParticles.forEach((p, idx) => {
-        // Ambient gentle drift: orbiting around base position
-        const ambientX = p.basePosition.x + Math.sin(time * 0.8 + p.phaseOffset) * p.driftRadius;
-        const ambientY = p.basePosition.y + Math.cos(time * 0.7 + p.phaseOffset) * p.driftRadius;
-        const ambientZ = p.basePosition.z + Math.sin(time * 0.5 + p.phaseOffset) * (p.driftRadius * 0.6);
+        // Ambient gentle drift: orbiting around base position (quieted during recursive invitation)
+        const ambientX = p.basePosition.x + Math.sin(time * 0.8 + p.phaseOffset) * p.driftRadius * quietMultiplier;
+        const ambientY = p.basePosition.y + Math.cos(time * 0.7 + p.phaseOffset) * p.driftRadius * quietMultiplier;
+        const ambientZ = p.basePosition.z + Math.sin(time * 0.5 + p.phaseOffset) * (p.driftRadius * 0.6) * quietMultiplier;
 
-        // When active (attracting/connecting/geometry_reacting/stabilizing):
-        // Data converges inward toward the calculation nexus and geometric framework!
-        const convergenceWeight = activeGlow; // 0.0 to 1.0
-        const targetX = THREE.MathUtils.lerp(ambientX, p.targetConvergencePos.x, convergenceWeight * 0.82);
-        const targetY = THREE.MathUtils.lerp(ambientY, p.targetConvergencePos.y, convergenceWeight * 0.82);
-        const targetZ = THREE.MathUtils.lerp(ambientZ, p.targetConvergencePos.z, convergenceWeight * 0.82);
+        // When active or when recursive invitation is active:
+        // Particles orient toward their nexus or toward RECURSIVE_CORE_01 at (0, 0, -320)
+        let effTargetX = p.targetConvergencePos.x;
+        let effTargetY = p.targetConvergencePos.y;
+        let effTargetZ = p.targetConvergencePos.z;
+
+        if (invitationFactor > 0.05) {
+          effTargetX = THREE.MathUtils.lerp(effTargetX, 0, invitationFactor * 0.70);
+          effTargetY = THREE.MathUtils.lerp(effTargetY, 0, invitationFactor * 0.70);
+          effTargetZ = THREE.MathUtils.lerp(effTargetZ, -320, invitationFactor * 0.70);
+        } else if (impConvergence > 0.05) {
+          // Step 5: Converge directly toward the monolith center at (0, 0, -600)
+          effTargetX = THREE.MathUtils.lerp(effTargetX, 0, impConvergence * 0.92);
+          effTargetY = THREE.MathUtils.lerp(effTargetY, 0, impConvergence * 0.92);
+          effTargetZ = THREE.MathUtils.lerp(effTargetZ, -600, impConvergence * 0.92);
+        } else if (matGravity.strength > 0.05) {
+          // Reorganize toward the newly materializing physical object at (0, 0, -480)
+          effTargetX = THREE.MathUtils.lerp(effTargetX, matGravity.position.x, matGravity.strength * 0.65);
+          effTargetY = THREE.MathUtils.lerp(effTargetY, matGravity.position.y, matGravity.strength * 0.65);
+          effTargetZ = THREE.MathUtils.lerp(effTargetZ, matGravity.position.z, matGravity.strength * 0.65);
+        }
+
+        const convergenceWeight = Math.max(activeGlow, invitationFactor * 0.75, matGravity.strength * 0.60, impConvergence * 0.90);
+        const targetX = THREE.MathUtils.lerp(ambientX, effTargetX, convergenceWeight * 0.82);
+        const targetY = THREE.MathUtils.lerp(ambientY, effTargetY, convergenceWeight * 0.82);
+        const targetZ = THREE.MathUtils.lerp(ambientZ, effTargetZ, convergenceWeight * 0.82);
 
         p.currentPosition.x += (targetX - p.currentPosition.x) * 0.12;
         p.currentPosition.y += (targetY - p.currentPosition.y) * 0.12;
@@ -1238,55 +1311,63 @@ export class LivingCalculationEngine {
         geometryMesh.rotation.y += delta * baseRotSpeed * activeSpeedMultiplier;
         geometryMesh.rotation.x += delta * 0.12 * activeSpeedMultiplier;
 
-        // Specific construct geometric reactions:
+        // Specific construct geometric reactions, participating dynamically in the Dimensional Fold
         switch (config.id) {
           case 'sigma-convergence': {
-            // Lattice contracts and tightens vertices during summation
-            const tighten = 1.0 - activeGlow * 0.18;
+            // Lattice contracts during summation, and pulls multiple data streams together through the fold crease
+            const foldTighten = scrollProgress >= 0.66 ? Math.min(1, (scrollProgress - 0.66) / 0.12) * 0.35 : 0;
+            const tighten = Math.max(0.2, 1.0 - activeGlow * 0.18 - foldTighten);
             geometryMesh.scale.set(tighten, tighten, tighten);
             break;
           }
           case 'nabla-gradient': {
-            // Manifold flexes along gradient curvature
-            const flex = 1.0 + Math.sin(time * 3) * (0.05 + activeGlow * 0.15);
+            // Manifold flexes along gradient curvature and redirects particles along the new fold orientation
+            const foldTilt = scrollProgress >= 0.72 ? Math.min(1, (scrollProgress - 0.72) / 0.08) * 0.5 : 0;
+            geometryMesh.rotation.z += foldTilt;
+            const flex = 1.0 + Math.sin(time * 3) * (0.05 + activeGlow * 0.15 + foldTilt * 0.2);
             geometryMesh.scale.set(1.0, flex, 1.0);
             break;
           }
           case 'lambda-spectral': {
-            // Wave crests oscillate with modulated wavelength
-            const waveScale = 1.0 + Math.sin(time * (2.5 + activeGlow * 4)) * (0.08 + activeGlow * 0.2);
+            // Wave crests oscillate with modulated wavelength; wavelength compresses/stretches with the fold wave
+            const foldWaveCompress = scrollProgress >= 0.66 ? Math.min(1, (scrollProgress - 0.66) / 0.12) * 2.2 : 0;
+            const waveScale = 1.0 + Math.sin(time * (2.5 + activeGlow * 4 + foldWaveCompress * 3)) * (0.08 + activeGlow * 0.2 + foldWaveCompress * 0.12);
             geometryMesh.scale.set(1.0, waveScale, 1.0);
             break;
           }
           case 'integral-accumulation': {
-            // Stratified planes illuminate and expand sequentially
-            const expand = 1.0 + activeGlow * 0.16;
-            geometryMesh.scale.set(expand, expand, expand);
+            // Stratified planes illuminate and compress along the vertical accumulation axis during 2D flattening
+            const foldPlaneCompress = scrollProgress >= 0.66 ? Math.min(1, (scrollProgress - 0.66) / 0.06) * 0.3 : 0;
+            const expand = (1.0 + activeGlow * 0.16) * (1.0 - foldPlaneCompress);
+            geometryMesh.scale.set(expand, expand * (1.0 - foldPlaneCompress * 0.5), expand);
             break;
           }
           case 'pi-metric': {
-            // Geodesic ring breathing expansion/contraction
-            const breathe = 1.0 + Math.sin(time * (1.8 + activeGlow * 2.5)) * (0.06 + activeGlow * 0.14);
+            // Geodesic ring breathing expansion/contraction, remaining attached to curved fold geometry
+            const foldExpand = scrollProgress >= 0.72 ? Math.min(1, (scrollProgress - 0.72) / 0.08) * 0.25 : 0;
+            const breathe = 1.0 + Math.sin(time * (1.8 + activeGlow * 2.5)) * (0.06 + activeGlow * 0.14) + foldExpand;
             geometryMesh.scale.set(breathe, breathe, breathe);
             break;
           }
           case 'delta-differential': {
-            // Coordinate framework shifts position
-            const shiftX = Math.sin(time * 2) * (activeGlow * 8);
-            const shiftY = Math.cos(time * 2) * (activeGlow * 8);
-            c.geometryGroup.position.x = (config.anchorPosition.x < 0 ? 90 : -90) + shiftX;
-            c.geometryGroup.position.y = -10 + shiftY;
+            // Coordinate framework shifts position and uncertainty interval contracts Delta x -> 0 during 2D planar compression
+            const foldCompress = scrollProgress >= 0.66 ? Math.min(1, (scrollProgress - 0.66) / 0.06) : 0;
+            const shiftX = Math.sin(time * 2) * (activeGlow * 8) * (1 - foldCompress * 0.7);
+            const shiftY = Math.cos(time * 2) * (activeGlow * 8) * (1 - foldCompress * 0.7);
+            c.geometryGroup.position.x = ((config.anchorPosition.x < 0 ? 90 : -90) + shiftX) * (1 - foldCompress * 0.4);
+            c.geometryGroup.position.y = (-10 + shiftY) * (1 - foldCompress * 0.4);
             break;
           }
           case 'partial-flux': {
-            // Polyhedral cage shimmers with refracted flux
+            // Polyhedral cage shimmers with refracted flux through translucent boundaries
             const fluxScale = 1.0 + Math.sin(time * 4) * (activeGlow * 0.12);
             geometryMesh.scale.set(fluxScale, fluxScale, fluxScale);
             break;
           }
           case 'infinity-limit': {
-            // Asymptotic loop tilts and accelerates
-            geometryMesh.rotation.z += delta * 0.4 * activeSpeedMultiplier;
+            // Asymptotic loop tilts and accelerates along the continuous fold curve
+            const foldSpeedBoost = scrollProgress >= 0.70 ? Math.min(1, (scrollProgress - 0.70) / 0.10) * 1.5 : 0;
+            geometryMesh.rotation.z += delta * (0.4 + foldSpeedBoost) * activeSpeedMultiplier;
             break;
           }
         }

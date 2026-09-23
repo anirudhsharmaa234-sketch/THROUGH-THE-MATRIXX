@@ -6,7 +6,17 @@
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { LivingCalculationEngine } from './deep/livingCalculationEngine.ts';
-import { CalculationConstructId } from '../types/livingCalculationTypes.ts';
+import { DimensionalFoldEngine } from './deep/dimensionalFoldEngine.ts';
+import { RecursiveDeepEngine } from './deep/recursiveDeepEngine.ts';
+import { PhysicalMaterializationEngine } from './deep/physicalMaterializationEngine.ts';
+import { ImpossibleSolutionEngine } from './deep/impossibleSolutionEngine.ts';
+import {
+  CalculationConstructId,
+  DimensionalFoldMetrics,
+  RecursiveDeepMetrics,
+  PhysicalMaterializationMetrics,
+  ImpossibleSolutionMetrics,
+} from '../types/livingCalculationTypes.ts';
 
 export interface DeepMathematicalEnvironmentProps {
   scrollProgress: number; // 0.0 to 1.0 (pure scroll-driven, no autoplay)
@@ -489,6 +499,18 @@ export default function DeepMathematicalEnvironment({
   const neuralNodesPointsRef = useRef<THREE.Points | null>(null);
   const binaryColumnsGroupRef = useRef<THREE.Group | null>(null);
   const livingCalcEngineRef = useRef<LivingCalculationEngine | null>(null);
+  const dimensionalFoldEngineRef = useRef<DimensionalFoldEngine | null>(null);
+  const [foldMetrics, setFoldMetrics] = useState<DimensionalFoldMetrics | null>(null);
+  const lastFoldMetricsUpdateRef = useRef<number>(0);
+  const recursiveDeepEngineRef = useRef<RecursiveDeepEngine | null>(null);
+  const [recursiveMetrics, setRecursiveMetrics] = useState<RecursiveDeepMetrics | null>(null);
+  const lastRecursiveMetricsUpdateRef = useRef<number>(0);
+  const physicalMaterializationEngineRef = useRef<PhysicalMaterializationEngine | null>(null);
+  const [materializationMetrics, setMaterializationMetrics] = useState<PhysicalMaterializationMetrics | null>(null);
+  const lastMaterializationMetricsUpdateRef = useRef<number>(0);
+  const impossibleSolutionEngineRef = useRef<ImpossibleSolutionEngine | null>(null);
+  const [impossibleMetrics, setImpossibleMetrics] = useState<ImpossibleSolutionMetrics | null>(null);
+  const lastImpossibleMetricsUpdateRef = useRef<number>(0);
 
   // Mouse parallax coordinates
   const mouseRef = useRef<{ x: number; y: number; targetX: number; targetY: number }>({
@@ -558,6 +580,30 @@ export default function DeepMathematicalEnvironment({
     livingCalcEngine.constructs.forEach((c) => {
       interactiveObjectsRef.current.push(c.hitCollider);
     });
+
+    // -------------------------------------------------------------------------
+    // LAYER 0.5: Dimensional Fold Engine (Step 2 Cinematic Space Transformation)
+    // -------------------------------------------------------------------------
+    const dimensionalFoldEngine = new DimensionalFoldEngine(scene);
+    dimensionalFoldEngineRef.current = dimensionalFoldEngine;
+
+    // -------------------------------------------------------------------------
+    // LAYER 0.6: Recursive Deep Engine (Step 3 Cinematic Recursive Worlds)
+    // -------------------------------------------------------------------------
+    const recursiveDeepEngine = new RecursiveDeepEngine(scene);
+    recursiveDeepEngineRef.current = recursiveDeepEngine;
+
+    // -------------------------------------------------------------------------
+    // LAYER 0.7: Physical Materialization Engine (Step 4 Equation -> Physical Reality)
+    // -------------------------------------------------------------------------
+    const physicalMaterializationEngine = new PhysicalMaterializationEngine(scene);
+    physicalMaterializationEngineRef.current = physicalMaterializationEngine;
+
+    // -------------------------------------------------------------------------
+    // LAYER 0.8: Impossible Solution Engine (Step 5 The Impossible Solution)
+    // -------------------------------------------------------------------------
+    const impossibleSolutionEngine = new ImpossibleSolutionEngine(scene);
+    impossibleSolutionEngineRef.current = impossibleSolutionEngine;
 
     // -------------------------------------------------------------------------
     // LAYER 1: 3D Quantum Starfield / Deep Data Points
@@ -634,16 +680,16 @@ export default function DeepMathematicalEnvironment({
 
       for (let k = 0; k < 3; k++) {
         const mesh = new THREE.Mesh(geo, mat);
-        mesh.position.set(
-          (Math.random() - 0.5) * 1100,
-          (Math.random() - 0.5) * 750,
-          -200 - (setIdx * 3 + k) * 180
-        );
+        const origX = (Math.random() - 0.5) * 1100;
+        const origY = (Math.random() - 0.5) * 750;
+        const origZ = -200 - (setIdx * 3 + k) * 180;
+        mesh.position.set(origX, origY, origZ);
         mesh.rotation.z = (Math.random() - 0.5) * 0.4;
         mesh.userData = {
           elementId: 'symbolic-glyphs',
           type: 'symbol',
           title: 'OPERATOR GLYPHS',
+          origPos: new THREE.Vector3(origX, origY, origZ),
         };
         glyphPlanesGroup.add(mesh);
         interactiveObjectsRef.current.push(mesh);
@@ -687,7 +733,8 @@ export default function DeepMathematicalEnvironment({
       const cardMesh = new THREE.Mesh(cardGeo, mat);
       const pos = cardPositions[index % cardPositions.length];
       cardMesh.position.set(pos.x, pos.y, pos.z);
-      cardMesh.rotation.y = pos.x < 0 ? 0.14 : -0.14;
+      const origRotY = pos.x < 0 ? 0.14 : -0.14;
+      cardMesh.rotation.y = origRotY;
 
       // Tag element for exploration system
       const elemId = FORMULA_ELEMENT_IDS[index % FORMULA_ELEMENT_IDS.length];
@@ -696,6 +743,8 @@ export default function DeepMathematicalEnvironment({
         type: 'equation',
         index,
         title: data.title,
+        origPos: new THREE.Vector3(pos.x, pos.y, pos.z),
+        origRotY,
       };
 
       formulaCardsGroup.add(cardMesh);
@@ -1113,6 +1162,19 @@ export default function DeepMathematicalEnvironment({
         glyphPlanesGroupRef.current.children.forEach((child) => {
           if (child instanceof THREE.Mesh) {
             (child.material as THREE.MeshBasicMaterial).opacity = glyphAlpha * 0.75;
+
+            if (child.userData?.origPos) {
+              const orig = child.userData.origPos as THREE.Vector3;
+              if (dimensionalFoldEngineRef.current && p >= 0.60) {
+                const transformed = dimensionalFoldEngineRef.current.transformPosition(orig, p, time);
+                child.position.copy(transformed);
+                const foldRot = dimensionalFoldEngineRef.current.getFoldRotation(orig, p);
+                child.rotation.y = foldRot.y;
+              } else {
+                child.position.copy(orig);
+                child.rotation.y = 0;
+              }
+            }
           }
         });
       }
@@ -1147,6 +1209,21 @@ export default function DeepMathematicalEnvironment({
         formulaCardsGroupRef.current.children.forEach((child) => {
           if (child instanceof THREE.Mesh) {
             (child.material as THREE.MeshBasicMaterial).opacity = cardAlpha * 0.95;
+
+            if (child.userData?.origPos) {
+              const orig = child.userData.origPos as THREE.Vector3;
+              const baseRotY = (child.userData.origRotY as number) || 0;
+
+              if (dimensionalFoldEngineRef.current && p >= 0.60) {
+                const transformed = dimensionalFoldEngineRef.current.transformPosition(orig, p, time);
+                child.position.copy(transformed);
+                const foldRot = dimensionalFoldEngineRef.current.getFoldRotation(orig, p);
+                child.rotation.set(0, baseRotY + foldRot.y, foldRot.z);
+              } else {
+                child.position.copy(orig);
+                child.rotation.set(0, baseRotY, 0);
+              }
+            }
           }
         });
       }
@@ -1211,7 +1288,10 @@ export default function DeepMathematicalEnvironment({
         const isSelected = selectedElementIdRef.current === 'tesseract-4d';
         const hoverBonus = isSelected ? 1.08 : isHovered ? 1.04 : 1.0;
         const finalScale = modelScaleRef.current * hoverBonus;
-        cubicBoxGroupRef.current.scale.set(finalScale, finalScale, finalScale);
+
+        // Planar 3D -> 2D flattening in Z during compression phase (p = 0.66 to 0.72)
+        const zFlatten = p >= 0.66 ? Math.max(0.12, 1.0 - Math.min(1, (p - 0.66) / 0.06) * 0.88) : 1.0;
+        cubicBoxGroupRef.current.scale.set(finalScale, finalScale, finalScale * zFlatten);
 
         // Fade all materials in cubic box group
         cubicBoxMaterialsRef.current.forEach((mat) => {
@@ -1310,12 +1390,16 @@ export default function DeepMathematicalEnvironment({
       // 7. Dynamic Camera Fly-through mapped to Scroll Progress
       if (cameraRef.current) {
         // Starts at Z=650, glides forward smoothly to Z=-400 as user scrolls
-        const targetZ = 650 - p * 1050;
+        let targetZ = 650 - p * 1050;
+        if (recursiveDeepEngineRef.current && p >= 0.74) {
+          targetZ = recursiveDeepEngineRef.current.getRecursiveCameraZ(targetZ, p);
+        }
         cameraRef.current.position.z = targetZ;
 
         // Subtle lateral camera sweep and mouse parallax
-        const lateralSweep = Math.sin(p * Math.PI * 1.5) * 60;
-        const verticalSweep = Math.cos(p * Math.PI * 1.2) * 35;
+        const sweepDamp = p >= 0.78 ? 0.35 : 1.0;
+        const lateralSweep = Math.sin(p * Math.PI * 1.5) * 60 * sweepDamp;
+        const verticalSweep = Math.cos(p * Math.PI * 1.2) * 35 * sweepDamp;
         cameraRef.current.position.x = lateralSweep + mouseRef.current.x * 40;
         cameraRef.current.position.y = verticalSweep - mouseRef.current.y * 30;
 
@@ -1358,9 +1442,93 @@ export default function DeepMathematicalEnvironment({
         }
       }
 
-      // 11. Living Calculation Engine Update (Data convergence, dynamic lines, procedural geometry)
+      // 10. Dimensional Fold Engine Update (Manifold fold, metric laser bridges, 4D conduit, particles)
+      if (dimensionalFoldEngineRef.current) {
+        const metrics = dimensionalFoldEngineRef.current.update(
+          delta,
+          time,
+          scrollProgressRef.current,
+          cameraRef.current || undefined
+        );
+
+        if (now - lastFoldMetricsUpdateRef.current > 100) {
+          lastFoldMetricsUpdateRef.current = now;
+          if (metrics.isFoldActive) {
+            setFoldMetrics({ ...metrics });
+          } else if (foldMetrics !== null) {
+            setFoldMetrics(null);
+          }
+        }
+      }
+
+      // 10.5. Recursive Deep Engine Update (Step 3: Recursive Cores 01, 02, 03 & Impossible Internal Worlds)
+      if (recursiveDeepEngineRef.current) {
+        const rMetrics = recursiveDeepEngineRef.current.update(
+          delta,
+          time,
+          scrollProgressRef.current,
+          cameraRef.current || undefined
+        );
+
+        if (now - lastRecursiveMetricsUpdateRef.current > 100) {
+          lastRecursiveMetricsUpdateRef.current = now;
+          if (rMetrics.isRecursiveActive) {
+            setRecursiveMetrics({ ...rMetrics });
+          } else if (recursiveMetrics !== null) {
+            setRecursiveMetrics(null);
+          }
+        }
+      }
+
+      // 10.6. Physical Materialization Engine Update (Step 4: Equation -> Physical Reality)
+      if (physicalMaterializationEngineRef.current) {
+        const matMetrics = physicalMaterializationEngineRef.current.update(
+          delta,
+          time,
+          scrollProgressRef.current,
+          cameraRef.current || undefined
+        );
+
+        if (now - lastMaterializationMetricsUpdateRef.current > 100) {
+          lastMaterializationMetricsUpdateRef.current = now;
+          if (matMetrics.isMaterializationActive) {
+            setMaterializationMetrics({ ...matMetrics });
+          } else if (materializationMetrics !== null) {
+            setMaterializationMetrics(null);
+          }
+        }
+      }
+
+      // 10.7. Impossible Solution Engine Update (Step 5: The Impossible Solution)
+      if (impossibleSolutionEngineRef.current) {
+        const impMetrics = impossibleSolutionEngineRef.current.update(
+          delta,
+          time,
+          scrollProgressRef.current,
+          physicalMaterializationEngineRef.current || undefined
+        );
+
+        if (now - lastImpossibleMetricsUpdateRef.current > 100) {
+          lastImpossibleMetricsUpdateRef.current = now;
+          if (impMetrics.isSolutionActive) {
+            setImpossibleMetrics({ ...impMetrics });
+          } else if (impossibleMetrics !== null) {
+            setImpossibleMetrics(null);
+          }
+        }
+      }
+
+      // 11. Living Calculation Engine Update (Data convergence, dynamic lines, procedural geometry + Fold, Recursive, Materialization & Impossible participation)
       if (livingCalcEngineRef.current) {
-        livingCalcEngineRef.current.update(delta, time, scrollProgressRef.current);
+        livingCalcEngineRef.current.update(
+          delta,
+          time,
+          scrollProgressRef.current,
+          dimensionalFoldEngineRef.current || undefined,
+          recursiveDeepEngineRef.current || undefined,
+          physicalMaterializationEngineRef.current || undefined,
+          impossibleSolutionEngineRef.current || undefined
+        );
       }
 
       // Render scene
@@ -1410,7 +1578,22 @@ export default function DeepMathematicalEnvironment({
     const domEl = renderer.domElement;
 
     const onPointerDown = (e: PointerEvent) => {
-      if (scrollProgressRef.current >= 0.91) return;
+      if (scrollProgressRef.current >= 0.97) return;
+
+      // Step 4: Physical Monolith interaction pulse trigger on click/tap
+      if (
+        physicalMaterializationEngineRef.current &&
+        physicalMaterializationEngineRef.current.currentMetrics.isMaterializationActive &&
+        cameraRef.current
+      ) {
+        const rect = domEl.getBoundingClientRect();
+        pointerVec.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        pointerVec.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+        raycaster.setFromCamera(pointerVec, cameraRef.current);
+        if (physicalMaterializationEngineRef.current.testHover(raycaster)) {
+          physicalMaterializationEngineRef.current.triggerInteractionPulse();
+        }
+      }
 
       pointerDownCoord = { x: e.clientX, y: e.clientY };
       lastPointerCoord = { x: e.clientX, y: e.clientY };
@@ -1542,6 +1725,24 @@ export default function DeepMathematicalEnvironment({
 
       // Hover feedback when not dragging
       if (e.pointerType === 'touch') return;
+
+      // Check hover on physical monolith during Step 4
+      if (
+        physicalMaterializationEngineRef.current &&
+        physicalMaterializationEngineRef.current.currentMetrics.isMaterializationActive &&
+        cameraRef.current
+      ) {
+        const rect = domEl.getBoundingClientRect();
+        pointerVec.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        pointerVec.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+        raycaster.setFromCamera(pointerVec, cameraRef.current);
+        const isMatHovered = physicalMaterializationEngineRef.current.testHover(raycaster);
+        if (isMatHovered) {
+          domEl.style.cursor = 'pointer';
+          return;
+        }
+      }
+
       const match = checkIntersection(e.clientX, e.clientY);
       if (match) {
         hoveredElementIdRef.current = match.elementId;
@@ -1670,6 +1871,12 @@ export default function DeepMathematicalEnvironment({
         rendererRef.current.dispose();
       }
 
+      livingCalcEngine.dispose();
+      dimensionalFoldEngine.dispose();
+      recursiveDeepEngine.dispose();
+      physicalMaterializationEngine.dispose();
+      impossibleSolutionEngine.dispose();
+
       scene.traverse((obj) => {
         if (obj instanceof THREE.Mesh || obj instanceof THREE.LineSegments || obj instanceof THREE.Points) {
           if (obj.geometry && typeof obj.geometry.dispose === 'function') {
@@ -1698,6 +1905,249 @@ export default function DeepMathematicalEnvironment({
         style={{ touchAction: 'pan-y' }}
         aria-hidden="true"
       />
+
+      {/* Dimensional Fold Real-Time Telemetry & Status HUD */}
+      {foldMetrics && foldMetrics.isFoldActive && (
+        <aside
+          id="dimensional-fold-hud"
+          aria-label="Dimensional Fold Status HUD"
+          className="fixed top-20 sm:top-24 left-5 sm:left-8 z-30 pointer-events-auto font-matrix-mono select-none transition-all duration-300"
+        >
+          <div className="flex flex-col gap-1.5 p-2.5 bg-black/90 border border-[#22c55e]/50 backdrop-blur-md shadow-[0_0_24px_rgba(34,197,94,0.25)] rounded-xs w-64 sm:w-72">
+            <div className="flex items-center justify-between text-[9px] tracking-[0.2em] border-b border-[#22c55e]/30 pb-1.5">
+              <span className="flex items-center gap-1.5 text-[#86efac] font-bold">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#4ade80] animate-pulse shadow-[0_0_6px_#4ade80]" />
+                DIMENSIONAL FOLD
+              </span>
+              <span className="text-neutral-400 text-[8px] uppercase tracking-[0.16em]">
+                {foldMetrics.phase}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between text-[9px] tracking-[0.16em] text-neutral-300 pt-0.5">
+              <span className="text-neutral-400">METRIC DISTANCE:</span>
+              <span className="text-[#86efac] font-bold">
+                {foldMetrics.metricDistance}u{' '}
+                <span className="text-neutral-500 font-normal">
+                  ({foldMetrics.foldFactor > 0.05 ? '−' + Math.round(foldMetrics.foldFactor * 100) + '%' : 'BASELINE'})
+                </span>
+              </span>
+            </div>
+
+            <div className="w-full bg-black/60 h-1.5 rounded-full overflow-hidden border border-[#22c55e]/25 mt-0.5">
+              <div
+                className="h-full bg-gradient-to-r from-[#22c55e] via-[#4ade80] to-[#86efac] transition-all duration-100"
+                style={{
+                  width: `${Math.round(
+                    (foldMetrics.alignmentFactor * 0.25 +
+                      foldMetrics.compressionFactor * 0.25 +
+                      foldMetrics.foldFactor * 0.3 +
+                      foldMetrics.reconstructionFactor * 0.2) *
+                      100
+                  )}%`,
+                }}
+              />
+            </div>
+
+            <div className="flex items-center justify-between text-[8px] tracking-[0.16em] text-neutral-400 pt-0.5">
+              <span>TOPOLOGY:</span>
+              <span className="text-[#4ade80] uppercase">
+                {foldMetrics.phase === 'aligning' && 'PARALLEL ALIGNMENT'}
+                {foldMetrics.phase === 'compressing' && '3D → 2D PLANAR COLLAPSE'}
+                {foldMetrics.phase === 'folding' && 'NON-EUCLIDEAN WARP'}
+                {foldMetrics.phase === 'reconstructing' && 'SPATIAL MODEL // UPDATED'}
+                {foldMetrics.phase === 'stabilized' && 'NEW TOPOLOGY LOCKED'}
+                {foldMetrics.phase === 'idle' && 'EUCLIDEAN 3D'}
+              </span>
+            </div>
+          </div>
+        </aside>
+      )}
+
+      {/* Recursive Deep Real-Time Telemetry & Depth State HUD */}
+      {recursiveMetrics && recursiveMetrics.isRecursiveActive && (
+        <aside
+          id="recursive-deep-hud"
+          aria-label="Recursive Deep Status HUD"
+          className="fixed top-20 sm:top-24 left-5 sm:left-8 z-30 pointer-events-auto font-matrix-mono select-none transition-all duration-300"
+        >
+          <div className="flex flex-col gap-1.5 p-2.5 bg-black/90 border border-[#22c55e]/50 backdrop-blur-md shadow-[0_0_24px_rgba(34,197,94,0.25)] rounded-xs w-64 sm:w-72">
+            <div className="flex items-center justify-between text-[9px] tracking-[0.2em] border-b border-[#22c55e]/30 pb-1.5">
+              <span className="flex items-center gap-1.5 text-[#86efac] font-bold">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#38bdf8] animate-pulse shadow-[0_0_6px_#38bdf8]" />
+                {recursiveMetrics.activeCoreId ?? 'RECURSIVE DEEP'}
+              </span>
+              <span className="text-[#38bdf8] text-[8px] uppercase tracking-[0.16em]">
+                {recursiveMetrics.depthLabel}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between text-[9px] tracking-[0.16em] text-neutral-300 pt-0.5">
+              <span className="text-neutral-400">INTERNAL SCALE:</span>
+              <span className="text-[#86efac] font-bold">
+                {recursiveMetrics.internalExpansionFactor.toFixed(1)}×{' '}
+                <span className="text-neutral-500 font-normal">
+                  ({recursiveMetrics.currentDepth === 0 ? 'FINITE BOUNDARY' : 'IMPOSSIBLE SCALE'})
+                </span>
+              </span>
+            </div>
+
+            <div className="w-full bg-black/60 h-1.5 rounded-full overflow-hidden border border-[#22c55e]/25 mt-0.5">
+              <div
+                className="h-full bg-gradient-to-r from-[#22c55e] via-[#38bdf8] to-[#86efac] transition-all duration-100"
+                style={{
+                  width: `${Math.round(
+                    (recursiveMetrics.currentDepth / 3.0) * 80 +
+                      (recursiveMetrics.boundaryPenetration > 0 ? 20 : 0)
+                  )}%`,
+                }}
+              />
+            </div>
+
+            <div className="flex items-center justify-between text-[8px] tracking-[0.16em] text-neutral-400 pt-0.5">
+              <span>STATUS:</span>
+              <span className="text-[#86efac] uppercase">
+                {recursiveMetrics.modelLabel}
+              </span>
+            </div>
+          </div>
+        </aside>
+      )}
+
+      {/* Physical Materialization Real-Time Synthesis & Telemetry HUD (Step 4) */}
+      {materializationMetrics && materializationMetrics.isMaterializationActive && (!impossibleMetrics || !impossibleMetrics.isImpossibleResolved) && (
+        <aside
+          id="physical-materialization-hud"
+          aria-label="Physical Materialization Status HUD"
+          className="fixed top-20 sm:top-24 left-5 sm:left-8 z-30 pointer-events-auto font-matrix-mono select-none transition-all duration-300"
+        >
+          <div className="flex flex-col gap-1.5 p-2.5 bg-black/90 border border-[#22c55e]/50 backdrop-blur-md shadow-[0_0_24px_rgba(34,197,94,0.25)] rounded-xs w-72 sm:w-80">
+            <div className="flex items-center justify-between text-[9px] tracking-[0.2em] border-b border-[#22c55e]/30 pb-1.5">
+              <span className="flex items-center gap-1.5 text-[#86efac] font-bold">
+                <span
+                  className={`w-1.5 h-1.5 rounded-full ${
+                    materializationMetrics.stage === 'stage6_activated'
+                      ? 'bg-[#4ade80] animate-ping shadow-[0_0_8px_#4ade80]'
+                      : 'bg-[#22c55e] animate-pulse shadow-[0_0_6px_#22c55e]'
+                  }`}
+                />
+                EQUATION → REALITY
+              </span>
+              <span className="text-[#4ade80] text-[8px] uppercase tracking-[0.16em]">
+                {materializationMetrics.stageName}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between text-[9px] tracking-[0.16em] text-neutral-300 pt-0.5">
+              <span className="text-neutral-400">ORIGIN:</span>
+              <span className="text-[#86efac] font-bold font-mono text-[9px]">
+                {materializationMetrics.equationOrigin}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-1 text-[8px] tracking-[0.14em] text-neutral-400 py-0.5 border-t border-b border-[#22c55e]/20">
+              <div className="flex justify-between">
+                <span>WIREFRAME:</span>
+                <span className="text-[#4ade80] font-bold">
+                  {Math.round(materializationMetrics.wireframeIntegrity * 100)}%
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>DENSITY:</span>
+                <span className="text-[#86efac] font-bold">
+                  {Math.round(materializationMetrics.surfaceDensity * 100)}%
+                </span>
+              </div>
+            </div>
+
+            <div className="w-full bg-black/60 h-1.5 rounded-full overflow-hidden border border-[#22c55e]/25 mt-0.5">
+              <div
+                className="h-full bg-gradient-to-r from-[#22c55e] via-[#4ade80] to-[#f0fdf4] transition-all duration-100"
+                style={{
+                  width: `${Math.round(materializationMetrics.overallProgress * 100)}%`,
+                }}
+              />
+            </div>
+
+            <div className="flex items-center justify-between text-[8px] tracking-[0.16em] text-neutral-400 pt-0.5">
+              <span>SUBSTRATE:</span>
+              <span
+                className={`uppercase font-bold ${
+                  materializationMetrics.stage === 'stage6_activated'
+                    ? 'text-[#86efac] animate-pulse'
+                    : 'text-neutral-300'
+                }`}
+              >
+                {materializationMetrics.stage === 'stage6_activated'
+                  ? 'INTERACTIVE // HOVER OR TAP CORE'
+                  : materializationMetrics.statusLabel}
+              </span>
+            </div>
+          </div>
+        </aside>
+      )}
+
+      {/* Step 5: Minimal Technical State Indicator (The Impossible Solution Resolved) */}
+      {impossibleMetrics && impossibleMetrics.isSolutionActive && (
+        <aside
+          id="deep-impossible-solution-readout"
+          aria-label="Deep System Solution Telemetry"
+          className="fixed top-20 sm:top-24 left-5 sm:left-8 z-30 pointer-events-none font-matrix-mono select-none transition-all duration-300"
+        >
+          <div className="flex flex-col gap-1.5 p-3 bg-black/90 border border-[#22c55e]/50 backdrop-blur-md shadow-[0_0_28px_rgba(34,197,94,0.30)] rounded-xs w-72 sm:w-80">
+            <div className="flex items-center justify-between text-[9px] tracking-[0.24em] border-b border-[#22c55e]/30 pb-1.5">
+              <span className="flex items-center gap-1.5 text-neutral-300 font-bold uppercase">
+                <span
+                  className={`w-2 h-2 rounded-full ${
+                    impossibleMetrics.isImpossibleResolved
+                      ? 'bg-[#4ade80] shadow-[0_0_10px_#4ade80]'
+                      : 'bg-[#22c55e] animate-pulse'
+                  }`}
+                />
+                DEEP SYSTEM
+              </span>
+              <span className="text-[#86efac] text-[8px] font-bold tracking-[0.2em] uppercase">
+                {impossibleMetrics.isImpossibleResolved ? 'STATE // CONVERGED' : 'SYNCHRONIZING'}
+              </span>
+            </div>
+
+            <div className="pt-0.5 flex flex-col gap-0.5">
+              <div className="text-[10px] sm:text-xs font-bold tracking-[0.2em] text-[#86efac] uppercase">
+                {impossibleMetrics.isImpossibleResolved ? 'SOLUTION // RESOLVED' : impossibleMetrics.stateIndicator}
+              </div>
+              <div className="text-[8px] sm:text-[9px] tracking-[0.16em] text-neutral-400 uppercase">
+                {impossibleMetrics.subReadout}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-1 text-[8px] tracking-[0.14em] text-neutral-400 pt-1.5 border-t border-[#22c55e]/20 mt-0.5">
+              <div className="flex justify-between">
+                <span>CONVERGENCE:</span>
+                <span className="text-[#4ade80] font-bold">
+                  {Math.round(impossibleMetrics.convergenceFactor * 100)}%
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>STABILITY:</span>
+                <span className="text-[#86efac] font-bold">
+                  {Math.round(impossibleMetrics.calculationStability * 100)}%
+                </span>
+              </div>
+            </div>
+
+            {impossibleMetrics.networkTopologyGenesis > 0 && (
+              <div className="w-full bg-black/60 h-1.5 rounded-full overflow-hidden border border-[#22c55e]/25 mt-1">
+                <div
+                  className="h-full bg-gradient-to-r from-[#22c55e] via-[#4ade80] to-[#f0fdf4] transition-all duration-75"
+                  style={{
+                    width: `${Math.round(impossibleMetrics.networkTopologyGenesis * 100)}%`,
+                  }}
+                />
+              </div>
+            )}
+          </div>
+        </aside>
+      )}
 
       {/* Cybernetic 3D Cubic Model HUD Controller & Telemetry */}
       {scrollProgress >= 0.20 && scrollProgress < 0.92 && (
